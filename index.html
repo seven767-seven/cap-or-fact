@@ -263,7 +263,7 @@ body.modal-open .timer i{animation-play-state:paused}
 .ev .tag{font-size:11.5px;font-weight:700;background:var(--marker);padding:1px 7px;border-radius:999px}
 .list{display:flex;flex-direction:column;gap:8px}
 .list .ev{background:var(--tint)}
-.calls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.calls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .call{display:flex;flex-direction:column;gap:3px;text-align:left;border:1.5px solid var(--ink);background:var(--surface);border-radius:16px;padding:11px 14px 12px;line-height:1.25}
 .call b{font-size:15.5px}
 .call small{font-size:12.5px;color:var(--muted);line-height:1.35}
@@ -328,7 +328,6 @@ body.modal-open .timer i{animation-play-state:paused}
   .opt:hover{background:var(--marker)}
   .tool:hover:not(:disabled){border-color:var(--ink)}
   .call.share:hover{background:var(--real);border-color:var(--real);color:#fff}
-  .call.pass:hover{background:var(--tint)}
   .call.ask:hover{background:var(--marker)}
   .level:hover{border-color:var(--on-field)}
   .call.flag:hover{background:var(--fake);border-color:var(--fake);color:#fff}
@@ -1155,7 +1154,7 @@ const UI = {
   statCite:{en:"Vosoughi, Roy & Aral, Science, 2018", zh:"Vosoughi, Roy & Aral,《科学》,2018"},
   acts:[
     { h:{en:"Forge", zh:"造假"}, p:{en:"Pick one of {s} true stories, build a fake post out of it, and watch how far it travels.", zh:"从 {s} 个真实故事里挑一个,把它拼成一条假帖子,看它能传多远。"} },
-    { h:{en:"Scroll", zh:"刷帖"}, p:{en:"Posts land in your feed, drawn at random from {n} each game. Some are true. You decide what gets shared.", zh:"每局从 {n} 条帖子里随机抽取,有真有假,转不转由你决定。"} },
+    { h:{en:"Scroll", zh:"刷帖"}, p:{en:"Posts land in your feed, drawn at random from {n} each game. Some are true. You decide which is which.", zh:"每局从 {n} 条帖子里随机抽取,有真有假,由你来判断。"} },
     { h:{en:"Investigate", zh:"查证"}, p:{en:"Six tools, and only a few checks per post. Choose them well.", zh:"六种查证工具,但每条帖子只能用几次。选对了才看得清。"} },
   ],
   stepOf:{en:"Act 1, step {a} of {b}", zh:"第一幕,第 {a} 步(共 {b} 步)"},
@@ -1175,7 +1174,7 @@ const UI = {
            zh:"你说了实话,它几乎没传开。这个差距正是那些手法存在的原因。接下来的信息流里,你会一一遇到它们。"},
   endNote:{en:"Nothing you wrote here left this page. Maple Ridge and everyone in it are made up.", zh:"你在这里写的内容没有离开这个页面。枫岭镇和里面的所有人都是虚构的。"},
   toFeed:{en:"Switch sides: open the feed", zh:"换边:打开信息流"},
-  prompt:{en:"What will you do with this post?", zh:"这条帖子,你怎么处理?"},
+  prompt:{en:"Is this post true or fake?", zh:"这条帖子是真是假?"},
   howTitle:{en:"How this part works", zh:"这一幕怎么玩"},
   howBody:{en:"First investigate: each check tells you one fact about the post, and you only get a few. Then decide what to do with the post. The town map shows what your decision causes.",
            zh:"先查证:每查一项,你会知道关于这条帖子的一个事实,但次数有限。然后决定怎么处理这条帖子。小镇地图会显示你的决定带来的后果。"},
@@ -1183,28 +1182,27 @@ const UI = {
   checksLeft:{en:"Left", zh:"还剩"},
   timeLeft:{en:"Time left", zh:"剩余时间"},
   strong:{en:"strong clue", zh:"关键线索"},
-  callsTitle:{en:"Step 2: decide what to do with this post.", zh:"第 2 步:决定怎么处理这条帖子。"},
-  share:{en:"Share it", zh:"转发"}, pass:{en:"Scroll past", zh:"划走"}, ask:{en:"Ask for the source", zh:"评论求证"}, flag:{en:"Flag as fake", zh:"标记为假"},
+  callsTitle:{en:"Step 2: make your call.", zh:"第 2 步:做出判断。"},
+  share:{en:"Confirm as true", zh:"确认为真"}, ask:{en:"Not sure", zh:"不确定"}, flag:{en:"Flag as fake", zh:"标记为假"},
   callHints:{
-    share:{en:"Your friends see it and pass it on. Do this only if it's true.", zh:"你的朋友都会看到,并继续传下去。帖子是真的才该转。"},
-    pass:{en:"Do nothing. The post keeps travelling without you.", zh:"什么都不做。没有你,帖子也会继续传。"},
-    ask:{en:"Reply “source?” in public. The safe move when you're unsure.", zh:"公开回一句“有来源吗?”。拿不准时的稳妥做法。"},
+    share:{en:"You vouch for it, so people near you believe it too. Pick this only if it's true.", zh:"你替它担保,身边的人也会因此相信它。帖子是真的才该选。"},
+    ask:{en:"You can't tell yet, so you say so. Fewer points than a right call, but no penalty.", zh:"你还拿不准,就如实说不确定。分数比判断正确少,但不会扣分。"},
     flag:{en:"Warn people near you that it's false. A mistake if it's true.", zh:"提醒身边的人这是假的。如果帖子是真的,就标错了。"},
   },
-  scoring:{en:"Points: right share or flag {r}. Asking {a1} or {a2}. Wrong share or flag {w1} or {w2}.", zh:"得分:转发或标记正确 {r};求证 {a1} 或 {a2};转发或标记错了 {w1} 或 {w2}。"},
+  scoring:{en:"Points: right call {r}. Not sure {a1} or {a2}. Wrong call {w1} or {w2}.", zh:"得分:判断正确 {r};不确定 {a1} 或 {a2};判断错误 {w1} 或 {w2}。"},
   stampFake:{en:"CAP", zh:"假的"}, stampReal:{en:"FACT", zh:"真的"},
   wasFake:{en:"This post was fake.", zh:"这条帖子是假的。"},
   wasReal:{en:"This post was true.", zh:"这条帖子是真的。"},
   right:{en:"Right call.", zh:"判断正确。"}, wrong:{en:"Wrong call.", zh:"判断失误。"}, passive:{en:"You stayed out of it.", zh:"你没有参与。"},
-  hedge:{en:"Careful move.", zh:"稳妥的一步。"}, timeUp:{en:"Time's up.", zh:"时间到。"},
+  hedge:{en:"Fair enough.", zh:"如实说了不确定。"}, timeUp:{en:"Time's up.", zh:"时间到。"},
   cons:{
-    fake_share:{en:"Your share ran through the town: {n} more people believed it.", zh:"你的转发在镇上传开了:又有 {n} 人信了这条假消息。"},
-    fake_pass:{en:"Nobody flagged it, so others kept sharing: {n} more people believed it.", zh:"没有人标记它,别人还在继续转:又有 {n} 人信了这条假消息。"},
-    fake_ask:{en:"Your question made {n} people nearby stop and think. A flag would have protected more.", zh:"你的提问让身边 {n} 人停下来想了想。直接标记能保护更多人。"},
+    fake_share:{en:"You confirmed a fake, and people trusted you: {n} more people believed it.", zh:"你把假消息确认为真,大家信了你:又有 {n} 人信了这条假消息。"},
+    fake_pass:{en:"Time ran out and nobody flagged it, so it kept spreading: {n} more people believed it.", zh:"时间到了,没有人标记它,它还在继续传:又有 {n} 人信了这条假消息。"},
+    fake_ask:{en:"Saying you weren't sure made {n} people nearby stop and think. A flag would have protected more.", zh:"你说了不确定,身边 {n} 人也停下来多想了想。直接标记能保护更多人。"},
     fake_flag:{en:"{n} people near you saw the warning and are now on their guard. Fakes can no longer pass through them.", zh:"你身边有 {n} 人看到了提醒,现在有了防备,假消息再也传不过他们。"},
-    real_share:{en:"{n} more people got accurate information.", zh:"又有 {n} 人得到了准确的信息。"},
-    real_pass:{en:"No harm done, and nobody learned anything either.", zh:"没有造成伤害,但也没有人因此知道更多。"},
-    real_ask:{en:"The poster replied with a link. {n} more people saw the source.", zh:"发帖人回复了链接,又有 {n} 人看到了出处。"},
+    real_share:{en:"You confirmed a true post: {n} more people got accurate information.", zh:"你确认了一条真消息:又有 {n} 人得到了准确的信息。"},
+    real_pass:{en:"Time ran out. No harm done, but nobody learned anything either.", zh:"时间到了。没有造成伤害,但也没有人因此知道更多。"},
+    real_ask:{en:"You weren't sure, and someone replied with the source: {n} more people saw it.", zh:"你说了不确定,后来有人贴出了来源:又有 {n} 人看到了出处。"},
     real_flag:{en:"Doubting everything has a cost too. Accurate information got buried.", zh:"什么都不信同样有代价:准确的信息被埋掉了。"},
   },
   allChecks:{en:"What each check shows", zh:"每项查证的结果"},
@@ -1219,7 +1217,7 @@ const UI = {
   ranks:[ {en:"Rookie Checker", zh:"见习核查员"}, {en:"Sharp Scroller", zh:"眼尖的刷帖人"}, {en:"Chief Fact-Checker", zh:"首席核查员"} ],
   tiles:{ right:{en:"Right calls", zh:"判断正确"}, misled:{en:"People who believed a fake", zh:"信了假消息的人"}, prot:{en:"People on their guard", zh:"有了防备的人"}, tricks:{en:"Tricks named", zh:"认出的手法"} },
   recapTitle:{en:"Your calls", zh:"你的每次判断"},
-  did:{ share:{en:"shared", zh:"转发"}, pass:{en:"skipped", zh:"划走"}, ask:{en:"asked", zh:"求证"}, flag:{en:"flagged", zh:"标记"} },
+  did:{ share:{en:"confirmed", zh:"确认为真"}, pass:{en:"timed out", zh:"超时"}, ask:{en:"not sure", zh:"不确定"}, flag:{en:"flagged", zh:"标记为假"} },
   was:{ fake:{en:"fake", zh:"假"}, real:{en:"true", zh:"真"} },
   siftTitle:{en:"Four moves to keep", zh:"带走这四步"},
   siftCite:{en:"The SIFT method, by Mike Caulfield", zh:"SIFT 方法,Mike Caulfield 提出"},
@@ -1259,7 +1257,7 @@ const UI = {
   fsSteps:{en:"Your choices", zh:"你的每一步"},
   pickName:{ honest:{en:"Honest", zh:"实话"}, mild:{en:"Mild", zh:"轻度"}, fake:{en:"Full trick", zh:"重度"} },
   switch:{ on:{en:"On", zh:"开"}, off:{en:"Off", zh:"关"} },
-  fb:{ good:{en:"Right!", zh:"答对了!"}, bad:{en:"Wrong", zh:"答错了"}, safe:{en:"Safe move", zh:"稳妥"},
+  fb:{ good:{en:"Right!", zh:"答对了!"}, bad:{en:"Wrong", zh:"答错了"}, safe:{en:"Not sure", zh:"不确定"},
        none:{en:"No points", zh:"不加分"}, time:{en:"Time's up", zh:"时间到"} },
   fbPts:{en:"{p} points", zh:"{p} 分"},
   streak:{en:"{n} right in a row", zh:"连续答对 {n} 次"},
@@ -1282,7 +1280,7 @@ const UI = {
     read:{en:"Now you are the reader. This post just showed up in your feed. Read it, and notice how it makes you feel before you do anything.", zh:"现在你是读者了。这条帖子刚出现在你的信息流里。先读一读,留意它让你有什么感觉,再做别的。"},
     tools:{en:"Don't guess. Check. Each button looks up one thing about the post. You get {n} per post, so pick what fits the claim. Tap one now.", zh:"别靠猜,先查。每个按钮帮你查这条帖子的一个方面。每条帖子只能查 {n} 项,挑最对症的。现在点一个。"},
     evidence:{en:"This is what the check found. {hint}Use it to judge the post, or spend another check if you have one left.", zh:"这就是查到的结果。{hint}根据它来判断,还有次数的话也可以再查一项。"},
-    calls:{en:"Now decide. Each button says what it does. If you still can't tell, asking for the source is the safe choice.", zh:"现在做决定。每个按钮下面都写了它的作用。实在拿不准,就选“评论求证”。"},
+    calls:{en:"Now make your call. Each button says what it does. If you still can't tell, choose \u201CNot sure\u201D: it never costs points.", zh:"现在做出判断。每个按钮下面都写了它的作用。实在拿不准,就选“不确定”,它不会扣分。"},
     outcome:{en:"The stamp shows the truth. This box explains why, and the bold line says what your choice did. Look at the map {where}.", zh:"印章告诉你真假。这个框解释了原因,粗体那句是你的决定带来的后果。再看看{where}的地图。"},
     trick:{en:"Bonus round. You forged a post yourself, so which trick did this one use? A right answer is worth 50 points.", zh:"加分题。你自己造过假,那这条帖子用的是哪种手法?答对加 50 分。"},
     next:{en:"That is the whole loop: read, check, decide. Go on to the next post. The guide comes back each new game until you turn it off with the Guide button at the top right.", zh:"整个流程就是这样:读、查、决定。去看下一条吧。每开一局引导都会再出现,不需要时点右上角的“引导”按钮关闭。"},
@@ -1766,7 +1764,7 @@ function viewFeed(freshStamp) {
         ${f.checks.map(id => evidence(p, id, lv.hints)).join("")}
       </div>
       <span class="sub step">${L(UI.callsTitle)}</span>
-      <div class="calls">${["share", "pass", "ask", "flag"].map(v =>
+      <div class="calls">${["share", "ask", "flag"].map(v =>
         `<button class="call ${v}" data-act="verdict" data-v="${v}"><b>${L(UI[v])}</b><small>${L(UI.callHints[v])}</small></button>`).join("")}</div>
       <p class="sub">${scoring}</p>`)}`;
   }
