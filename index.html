@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cap or Fact?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Instrument+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  /* One world: a cobalt town. The phone is the only bright surface in it.
+     Yellow belongs to the truth (the note, the marker, the way forward).
+     Coral and mint are the two verdict stamps and the two things that spread. */
+  --field:#2A3AD2;
+  --field-deep:#1D2AA6;
+  --field-soft:#7C89F4;
+  --on-field:#FFFFFF;
+  --on-field-quiet:#D3D8FF;
+  --surface:#FFFFFF;
+  --tint:#EEF0FB;
+  --line:#D4D8EE;
+  --ink:#131735;
+  --muted:#565C80;
+  --marker:#FFD93B;
+  --fake:#D93A27;      --fake-lit:#FF8571;
+  --real:#0B8257;      --real-lit:#7BF0C2;
+  --display:"Barlow Condensed","ZCOOL QingKe HuangYou","Noto Sans SC",Impact,"Arial Narrow",sans-serif;
+  --body:"Instrument Sans","Noto Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  /* Layout: the left column is the phone you act on. The right half of the page is the town, unboxed, living with your choices. */
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  /* Field tokens. Home is cobalt; the other screens override these below. */
+  --net-line:rgba(255,255,255,.17); --pop:var(--marker); --on-pop:var(--ink); --guard:#FFFFFF;
+  background:var(--field);color:var(--on-field);font:400 16px/1.5 var(--body);-webkit-font-smoothing:antialiased;
+  transition:background-color .45s ease,color .45s ease}
+/* Act 1, the forging workshop: stamp red. Slightly deeper than the transition's ink so the reveal edge reads. */
+body[data-screen="pickStory"],body[data-screen="forge"],body[data-screen="forgeEnd"]{
+  --field:#C2301E; --field-deep:#9C2213; --field-soft:#F0A497; --net-line:rgba(255,255,255,.2);
+  --on-field-quiet:#FFDCD5; --fake-lit:#23102E; --real-lit:#8FF5CD; --guard:#FFFFFF}
+/* Act 2, the feed: night ink, a shade lighter than the drop so the lens edge reads. */
+body[data-screen="feed"]{
+  --field:#151A44; --field-deep:#0B0E2C; --field-soft:#56619F; --net-line:rgba(255,255,255,.13);
+  --on-field-quiet:#B9BFE8; --fake-lit:#FF8571; --real-lit:#7BF0C2; --guard:#FFFFFF}
+/* Results: the magnifier's yellow, with ink text. */
+body[data-screen="result"]{
+  --field:#FFD93B; --field-deep:#EBC21C; --field-soft:#B6972A; --net-line:rgba(19,23,53,.16);
+  --on-field:#131735; --on-field-quiet:#5A4B12; --fake-lit:#C42F1D; --real-lit:#0B7A51;
+  --pop:#131735; --on-pop:#FFD93B; --guard:#131735}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3,p,ol,ul{margin:0}
+ol,ul{padding:0;list-style:none}
+:focus-visible{outline:3px solid var(--pop);outline-offset:3px}
+.phone :focus-visible{outline-color:var(--ink)}
+.disp{font-family:var(--display);font-weight:800;text-transform:uppercase;font-synthesis:none;line-height:.95;text-wrap:balance}
+
+.app{max-width:1180px;margin:0 auto;padding:16px 20px 64px}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{font-size:26px;font-weight:900;letter-spacing:.01em}
+.steps{display:flex;gap:4px;margin-left:8px}
+.steps li{font-size:13px;font-weight:600;padding:6px 11px;border-radius:999px;color:var(--on-field-quiet)}
+.steps li.now{background:var(--pop);color:var(--on-pop)}
+.steps li.done{color:var(--on-field)}
+.spacer{flex:1}
+.score{position:relative;font-weight:700;font-variant-numeric:tabular-nums}
+.delta{position:absolute;right:0;top:-2px;font-weight:800;font-size:15px;pointer-events:none;animation:floatUp 1.1s ease-out forwards}
+.delta.up{color:var(--real-lit)}
+.delta.down{color:var(--fake-lit)}
+@keyframes floatUp{0%{transform:translateY(4px);opacity:0}15%{opacity:1}100%{transform:translateY(-26px);opacity:0}}
+.lang{display:flex;border:1.5px solid var(--on-field-quiet);border-radius:999px;padding:2px}
+.lang button{border:0;background:none;border-radius:999px;padding:4px 11px;font-size:13px;font-weight:600;color:var(--on-field)}
+.lang button[aria-pressed="true"]{background:var(--on-field);color:var(--field)}
+
+/* page grid */
+.grid{display:grid;grid-template-columns:minmax(0,470px) minmax(0,1fr);gap:44px;align-items:start;margin-top:24px}
+body[data-screen="intro"] .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.stage{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+/* intro */
+.title{display:flex;flex-wrap:wrap;align-items:center;gap:.08em .14em;font-size:clamp(76px,11.5vw,156px);font-weight:900;line-height:.9;padding:.06em 0 .1em}
+.title .st{border:.065em solid currentColor;border-radius:.13em;padding:0 .14em .05em}
+.title .st.fake{color:var(--fake-lit);transform:rotate(-4deg)}
+.title .st.real{color:var(--real-lit);transform:rotate(2.5deg)}
+.title .or{font:600 .2em/1 var(--body);text-transform:none;color:var(--on-field-quiet)}
+.gloss{font-size:14px;color:var(--on-field-quiet)}
+.lede{font-size:clamp(28px,3.8vw,42px)}
+.lead{max-width:46ch;font-size:17px}
+.acts{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--field-soft);padding-top:18px}
+.acts li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 12px;align-items:baseline}
+.acts .n{font-size:44px;color:var(--marker);grid-row:span 2}
+.acts h3{font-size:24px}
+.acts p{color:var(--on-field-quiet);font-size:15px;max-width:52ch}
+.statline{font-size:14px;color:var(--on-field-quiet);max-width:60ch}
+.statline b{color:var(--on-field);font-weight:600}
+
+/* buttons */
+.btn{border:0;border-radius:999px;padding:13px 22px;font-weight:700;font-size:16px;line-height:1.2;background:var(--ink);color:#fff}
+.btn.cta{background:var(--marker);color:var(--ink);font-size:17px;padding:15px 26px}
+
+/* story picker (start of Act 1) */
+.stories{display:flex;flex-direction:column;gap:12px}
+.story{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:12px;text-align:left;border:0;border-radius:18px;padding:16px 18px;background:var(--surface);color:var(--ink);box-shadow:0 18px 30px -22px rgba(7,11,74,.9);transition:transform .15s ease}
+.story:nth-child(odd){transform:rotate(-.6deg)}
+.story:nth-child(even){transform:rotate(.5deg)}
+.story-truth{font-size:16.5px;line-height:1.45}
+.story-go{font-size:14px;font-weight:700;background:var(--marker);border-radius:999px;padding:6px 14px}
+.story-last{position:absolute;top:-9px;right:14px;font-size:12px;font-weight:700;background:var(--ink);color:#fff;border-radius:999px;padding:3px 10px}
+.story:active{transform:scale(.98)}
+
+/* forger score card (end of Act 1) */
+.fscore{background:var(--surface);color:var(--ink);border-radius:22px;padding:16px 18px 14px;display:flex;flex-direction:column;gap:12px;box-shadow:0 34px 60px -30px rgba(7,11,74,.85)}
+.fs-top{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+.fs-num{display:grid;grid-template-columns:auto auto;align-items:end;column-gap:4px}
+.fs-label{grid-column:1 / -1;font-size:13px;font-weight:700;color:var(--muted)}
+.fs-num b{font:900 68px/.86 var(--display);color:var(--fake);font-variant-numeric:tabular-nums;min-width:2ch}
+.fs-num small{font-size:16px;font-weight:700;color:var(--muted);padding-bottom:4px}
+.fs-rank{display:flex;flex-direction:column;gap:4px}
+.fs-rank b{font-size:28px;line-height:1}
+.fs-rank span{font-size:14px;line-height:1.4;color:var(--muted)}
+.fs-meter{height:10px;border-radius:999px;background:var(--tint);overflow:hidden}
+.fs-meter i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--marker),var(--fake));transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.fs-steps{display:flex;flex-direction:column}
+.fs-steps li{display:grid;grid-template-columns:5.5em auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:5px 0;border-top:1px solid var(--line);font-size:14px}
+.fs-slot{font-weight:600}
+.fs-slot::first-letter{text-transform:uppercase}
+.pill.fs-honest{background:var(--real);color:#fff}
+.pill.fs-mild{background:var(--marker);color:var(--ink)}
+.pill.fs-fake{background:var(--fake);color:#fff}
+.fs-trick{color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.fs-mult{font-weight:700;font-variant-numeric:tabular-nums}
+.fs-note{font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+@media (prefers-reduced-motion:reduce){.fs-meter i{transition:none}}
+
+/* difficulty picker and settings */
+.settings{display:flex;flex-wrap:wrap;gap:12px 32px}
+.levels{display:flex;flex-direction:column;gap:8px}
+.levelrow{display:flex;flex-wrap:wrap;gap:8px}
+.level{border:1.5px solid var(--on-field-quiet);background:none;color:var(--on-field);border-radius:999px;padding:8px 18px;font-weight:700;font-size:15px}
+.level[aria-pressed="true"]{background:var(--on-field);color:var(--field);border-color:var(--on-field)}
+
+/* scene transitions */
+.fx{position:fixed;inset:0;width:100%;height:100%;z-index:60;cursor:pointer;touch-action:none}
+
+/* home button and quit dialog */
+.homebtn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--on-field-quiet);background:none;color:var(--on-field);border-radius:999px;padding:5px 12px 5px 9px;font-size:13px;font-weight:600}
+.homebtn svg{width:16px;height:16px}
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(10,14,60,.62)}
+.dialog{position:fixed;z-index:41;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));background:var(--surface);color:var(--ink);border-radius:22px;padding:22px 22px 20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 34px 60px -24px rgba(7,11,74,.9)}
+.dialog h2{font-size:34px}
+.dialog p{font-size:15.5px;color:var(--muted)}
+.dialog-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.dialog-btns .btn{flex:1 1 150px}
+.btn.quit{background:var(--surface);color:var(--fake);box-shadow:inset 0 0 0 1.5px var(--fake)}
+.dialog :focus-visible{outline-color:var(--ink)}
+body.modal-open .timer i{animation-play-state:paused}
+
+/* first-round guide */
+.guidebtn{border:1.5px solid var(--on-field-quiet);background:none;color:var(--on-field);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600}
+.guidebtn[aria-pressed="true"]{background:var(--pop);border-color:var(--pop);color:var(--on-pop)}
+.coach{position:relative;background:var(--ink);color:#fff;border-left:6px solid var(--marker);border-radius:14px;padding:12px 16px 13px;display:flex;flex-direction:column;gap:10px;font-size:15px;line-height:1.45;text-align:left}
+.coach::after{content:"";position:absolute;left:26px;width:16px;height:16px;background:var(--ink);transform:rotate(45deg);display:none}
+.coach.down::after{display:block;bottom:-7px}
+.coach.up::after{display:block;top:-7px}
+.coach-btns{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.coach-btns:empty{display:none}
+.coach-next{border:0;border-radius:999px;background:var(--marker);color:var(--ink);font-weight:700;font-size:14px;padding:8px 18px}
+.coach :focus-visible{outline-color:var(--marker)}
+.guided{outline:3px solid var(--marker);outline-offset:5px}
+.phone .guided{outline-color:var(--ink);box-shadow:0 0 0 11px var(--marker)}
+
+/* brief: the words outside the phone */
+.brief{display:flex;flex-direction:column;gap:6px}
+.kicker{font-size:14px;font-weight:600;color:var(--on-field-quiet)}
+.h2{font-size:clamp(36px,5vw,50px)}
+.truth{background:var(--marker);color:var(--ink);padding:12px 14px 13px;border-radius:3px;transform:rotate(-.7deg);font-size:15px;line-height:1.45;box-shadow:0 10px 18px -12px rgba(7,11,74,.8)}
+.truth b{display:block;font-size:13px}
+.truth i{display:block;font-style:normal;font-weight:600;margin-top:6px}
+.opts{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.opt{text-align:left;background:var(--surface);color:var(--ink);border:0;border-radius:14px;padding:12px 16px;font-size:15.5px;line-height:1.35;font-weight:500}
+.fine{font-size:14px;color:var(--on-field-quiet);max-width:56ch}
+
+/* the phone */
+.phone{background:var(--surface);color:var(--ink);border-radius:28px;box-shadow:0 34px 60px -30px rgba(7,11,74,.85);overflow:hidden}
+.phone.glow-good{animation:glowGood 1s ease-out}
+.phone.glow-bad{animation:glowBad 1s ease-out}
+.phone.glow-bad.shake{animation:glowBad 1s ease-out,shakeX .42s ease-in-out}
+@keyframes glowGood{0%{box-shadow:0 0 0 0 rgba(11,130,87,.9),0 34px 60px -30px rgba(7,11,74,.85)}100%{box-shadow:0 0 0 22px rgba(11,130,87,0),0 34px 60px -30px rgba(7,11,74,.85)}}
+@keyframes glowBad{0%{box-shadow:0 0 0 0 rgba(217,58,39,.95),0 34px 60px -30px rgba(7,11,74,.85)}100%{box-shadow:0 0 0 22px rgba(217,58,39,0),0 34px 60px -30px rgba(7,11,74,.85)}}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+
+/* result bar at the top of the phone after each call */
+.verdictbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;border-radius:16px;padding:10px 14px 10px 10px;color:#fff;background:var(--muted)}
+.verdictbar.good{background:var(--real)}
+.verdictbar.bad{background:var(--fake)}
+.verdictbar.safe{background:var(--marker);color:var(--ink)}
+.verdictbar.fresh{animation:barIn .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes barIn{from{transform:translateY(-14px) scale(.92);opacity:0}to{transform:none;opacity:1}}
+.vb-icon{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font:800 22px/1 var(--body);background:rgba(255,255,255,.22)}
+.verdictbar.safe .vb-icon{background:rgba(19,23,53,.12)}
+.verdictbar.fresh .vb-icon{animation:iconPop .5s .12s cubic-bezier(.2,1.8,.4,1) both}
+@keyframes iconPop{from{transform:scale(.2) rotate(-30deg)}to{transform:none}}
+.vb-text{display:flex;flex-direction:column;line-height:1.2}
+.vb-text b{font-size:18px}
+.vb-text small{font-size:13px;font-weight:600;opacity:.92}
+.vb-pts{font:800 19px/1 var(--body);font-variant-numeric:tabular-nums;white-space:nowrap}
+.appbar{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:13px 20px 11px;border-bottom:1px solid var(--line)}
+.appbar .logo{font-size:23px;font-weight:900;letter-spacing:.02em}
+.appbar span{font-size:13px;font-weight:600;color:var(--muted)}
+.screen{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px}
+.sub{font-size:13px;font-weight:600;color:var(--muted)}
+
+.post{position:relative;display:flex;flex-direction:column;gap:10px}
+.post header{display:flex;align-items:center;gap:10px}
+.av{width:40px;height:40px;border-radius:50%;background:var(--c,#888);color:#fff;display:grid;place-items:center;font:700 17px/1 var(--body);flex:none}
+.who{display:flex;flex-direction:column;min-width:0}
+.who b{font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.handle{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.ptext{font-size:17px;line-height:1.42;overflow-wrap:anywhere}
+.src{font-size:14.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+.art{display:block;width:100%;height:auto;border-radius:14px}
+.pstats{font-size:13px;color:var(--muted)}
+.slot{border:1.5px dashed var(--line);border-radius:12px;padding:9px 12px;font-size:13px;color:var(--muted)}
+.slot.now{border:1.5px solid var(--ink);background:var(--marker);color:var(--ink);font-weight:600}
+.stamp{position:absolute;right:6px;top:34%;transform:rotate(-11deg);font-size:58px;font-weight:900;letter-spacing:.02em;color:var(--fake);border:5px solid currentColor;border-radius:12px;padding:0 14px 4px;background:rgba(255,255,255,.86);pointer-events:none}
+.stamp.real{color:var(--real)}
+.stamp.fresh{animation:slam .38s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes slam{from{transform:rotate(-11deg) scale(2.4);opacity:0}to{transform:rotate(-11deg) scale(1);opacity:1}}
+
+.reach{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.reach b{font-size:44px;font-variant-numeric:tabular-nums}
+.reach .why{flex-basis:100%;font-size:14px;color:var(--muted)}
+.reach .why strong{color:var(--ink)}
+
+/* countdown (Expert only) */
+.timerrow{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--on-field-quiet)}
+.timerrow:empty{display:none}
+.timer{flex:1;height:8px;border-radius:999px;background:var(--field-deep);overflow:hidden}
+.timer i{display:block;height:100%;background:var(--fake-lit);transform-origin:left;animation:drain linear forwards}
+@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* investigation tray */
+.tray{background:var(--tint);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.trayhead{display:flex;align-items:center;justify-content:space-between;gap:6px 10px;flex-wrap:wrap}
+.dots{display:inline-flex;gap:5px;align-items:center}
+.dots i{width:11px;height:11px;border-radius:50%;background:var(--ink)}
+.dots i.off{background:none;border:1.5px solid var(--muted)}
+.tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tool{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface);border:1.5px solid transparent;border-radius:14px;padding:11px 4px 9px;font-weight:600;font-size:13px;line-height:1.2;text-align:center}
+.tool svg{width:22px;height:22px}
+.tool small{font-size:11.5px;font-weight:400;line-height:1.25;color:var(--muted)}
+.tool.used small{color:#C9CEEA}
+.step{color:var(--ink)}
+.tool:disabled{cursor:default;color:var(--muted);background:none;border-color:var(--line)}
+.tool.used{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ev{background:var(--surface);border-left:5px solid var(--line);border-radius:10px;padding:9px 12px 10px;font-size:14.5px;line-height:1.45}
+.ev b{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:2px}
+.ev.key{border-left-color:var(--marker)}
+.ev .tag{font-size:11.5px;font-weight:700;background:var(--marker);padding:1px 7px;border-radius:999px}
+.list{display:flex;flex-direction:column;gap:8px}
+.list .ev{background:var(--tint)}
+.calls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.call{display:flex;flex-direction:column;gap:3px;text-align:left;border:1.5px solid var(--ink);background:var(--surface);border-radius:16px;padding:11px 14px 12px;line-height:1.25}
+.call b{font-size:15.5px}
+.call small{font-size:12.5px;color:var(--muted);line-height:1.35}
+
+/* outcome */
+.outcome{background:var(--tint);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;border-left:7px solid var(--line)}
+.outcome.good{border-left-color:var(--real)}
+.outcome.bad{border-left-color:var(--fake)}
+.outcome .cons{font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.tchip{border:1.5px solid var(--ink);background:var(--surface);border-radius:999px;padding:7px 13px;font-weight:600;font-size:14px}
+.tchip:disabled{cursor:default;opacity:.5}
+.tchip.hit{background:var(--real);color:#fff;border-color:var(--real);opacity:1}
+.tchip.miss{background:var(--fake);color:#fff;border-color:var(--fake);opacity:1}
+
+/* the town */
+.town{position:sticky;top:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.tally{display:flex;gap:26px;flex-wrap:wrap}
+.tally li{display:flex;flex-direction:column;gap:2px}
+.tally b{font-size:46px;font-variant-numeric:tabular-nums}
+.tally span{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--on-field-quiet)}
+.tally i{width:11px;height:11px;border-radius:50%;flex:none}
+.tally .m i{background:var(--fake-lit)} .tally .m b{color:var(--fake-lit)}
+.tally .g i{background:var(--real-lit)} .tally .g b{color:var(--real-lit)}
+.tally .p i{border:3px solid var(--guard)}
+.map{position:relative}
+#net{display:block;width:100%;aspect-ratio:5/4}
+.demo{position:absolute;left:50%;top:50%;width:min(330px,72%);transform:translate(-50%,-50%) rotate(-3deg);background:var(--surface);color:var(--ink);border-radius:22px;padding:16px 18px;box-shadow:0 34px 60px -30px rgba(7,11,74,.85)}
+.demo:empty{display:none}
+.hand{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tcard{background:var(--surface);color:var(--ink);border-radius:12px;padding:9px 11px 11px;display:flex;flex-direction:column;gap:4px;min-height:98px}
+.tcard:nth-child(odd){transform:rotate(-1.3deg)}
+.tcard:nth-child(even){transform:rotate(1.1deg)}
+.tcard b{font-size:19px}
+.tcard span{font-size:12.5px;line-height:1.35;color:var(--muted)}
+.tcard.off{background:var(--field-deep);color:var(--on-field-quiet);justify-content:center;align-items:center}
+.tcard.off b{font-size:40px;color:var(--field-soft)}
+.tcard.off span{color:var(--on-field-quiet)}
+
+/* results */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{background:var(--tint);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.tile b{font-size:40px;font-variant-numeric:tabular-nums}
+.tile span{font-size:13px;font-weight:600;color:var(--muted)}
+.block{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:14px}
+.recap li{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:15px}
+.recap .t{flex:1;min-width:0}
+.pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--tint);white-space:nowrap}
+.pill.good{background:var(--real);color:#fff}
+.pill.bad{background:var(--fake);color:#fff}
+.sift li{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:center;padding:4px 0;font-size:15px}
+.sift .l{font-size:28px;background:var(--marker);border-radius:8px;display:grid;place-items:center;height:36px}
+.cite{font-size:12.5px;color:var(--muted)}
+
+@media (hover:hover){
+  .story:hover{transform:translateY(-3px) rotate(0)}
+  .story:hover .story-go{background:var(--fake);color:#fff}
+  .homebtn:hover{background:var(--on-field);color:var(--field)}
+  .btn.quit:hover{background:var(--fake);color:#fff;box-shadow:none}
+  .btn:hover{background:var(--marker);color:var(--ink)}
+  .btn.cta:hover{background:var(--on-field)}
+  .opt:hover{background:var(--marker)}
+  .tool:hover:not(:disabled){border-color:var(--ink)}
+  .call.share:hover{background:var(--real);border-color:var(--real);color:#fff}
+  .call.pass:hover{background:var(--tint)}
+  .call.ask:hover{background:var(--marker)}
+  .level:hover{border-color:var(--on-field)}
+  .call.flag:hover{background:var(--fake);border-color:var(--fake);color:#fff}
+  .call.share:hover small,.call.flag:hover small{color:#fff}
+  .call.ask:hover small{color:var(--ink)}
+  .tchip:hover:not(:disabled){background:var(--marker)}
+}
+.btn:active,.opt:active,.call:active,.level:active,.coach-next:active,.tool:active:not(:disabled),.tchip:active:not(:disabled){transform:scale(.97)}
+
+@media (max-width:900px){
+  .app{padding:0 16px 48px}
+  .top{padding-top:12px;gap:8px}
+  .brand{font-size:21px}
+  .score{font-size:14px}
+  .guidebtn{padding:4px 9px;font-size:12px}
+  .homebtn{padding:4px 9px 4px 7px;font-size:12px}
+  .homebtn svg{width:14px;height:14px}
+  .lang button{padding:3px 8px;font-size:12px}
+  .steps{display:none}
+  .grid,body[data-screen="intro"] .grid{grid-template-columns:minmax(0,1fr);gap:18px;margin-top:10px}
+  .town{order:-1;top:0;z-index:5;background:var(--field);margin:0 -16px;padding:8px 16px 8px;gap:4px;border-bottom:1px solid var(--field-deep)}
+  .tally{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .tally li{gap:0}
+  .tally b{font-size:24px}
+  .tally span{font-size:11.5px;gap:5px}
+  .tally i{width:8px;height:8px}
+  .tally .p i{border-width:2px}
+  #net{aspect-ratio:auto;height:112px}
+  .hand,.fine.mapnote,.demo{display:none}
+  .title{font-size:clamp(64px,21vw,120px)}
+}
+@media (max-width:420px){
+  .tools{gap:6px}
+  .tool{font-size:12px}
+  .calls{grid-template-columns:minmax(0,1fr)}
+  .stamp{font-size:46px}
+}
+@media (prefers-reduced-motion:reduce){.stamp.fresh{animation:none}.phone.glow-bad.shake{animation:glowBad 1s ease-out}}
+</style>
+</head>
+<body data-screen="intro">
+<div class="app">
+  <div id="modal"></div>
+  <header class="top" id="top"></header>
+  <div class="grid">
+    <main class="stage" id="stage"></main>
+    <aside class="town" id="town">
+      <div class="timerrow" id="clock"></div>
+      <ul class="tally" id="tally"></ul>
+      <div class="map"><canvas id="net" role="img" aria-label="Network map"></canvas><div class="demo" id="demo" aria-hidden="true"></div></div>
+      <p class="fine mapnote" id="mapnote"></p>
+      <ul class="hand" id="hand"></ul>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CAP OR FACT?  -  single-file game, no build step, no dependencies.
+
+   File map
+     1. CONTENT   LEVELS, TRICKS, FORGE, POSTS, RULES, UI   (all text is {en, zh})
+     2. NETWORK   seeded graph + spread simulation drawn on <canvas>
+     3. STATE     one plain-JSON object; every screen renders from it
+     4. VIEWS     one function per screen, returns an HTML string
+     5. ACTIONS   click handlers, dispatched through data-act attributes
+
+   To add a post: append an object to POSTS. To add a language: add a
+   key next to en/zh everywhere and a button in renderTop().
+   ===================================================================== */
+
+/* ---------- 1. CONTENT ---------- */
+
+const PEOPLE = 250;            // people represented by one dot
+
+/* Difficulty. `prefer` biases which posts are dealt: easy ones, hard ones, or a random mix. */
+const LEVELS = {
+  easy:   { posts:6,  reals:2, checks:3, hints:true,  timer:0,  trickChoices:4, prefer:"easy",
+            name:{en:"Easy", zh:"简单"},
+            blurb:{en:"6 posts, 3 checks each. Strong clues are marked.", zh:"6 条帖子,每条可查 3 项,关键线索会标出来。"} },
+  normal: { posts:8,  reals:3, checks:2, hints:true,  timer:0,  trickChoices:8, prefer:"mixed",
+            name:{en:"Normal", zh:"标准"},
+            blurb:{en:"8 posts, 2 checks each. Strong clues are marked.", zh:"8 条帖子,每条可查 2 项,关键线索会标出来。"} },
+  hard:   { posts:10, reals:4, checks:2, hints:false, timer:0,  trickChoices:8, prefer:"hard",
+            name:{en:"Hard", zh:"高手"},
+            blurb:{en:"10 trickier posts, 2 checks each. No clue markers.", zh:"10 条更难分辨的帖子,每条可查 2 项,不再标出关键线索。"} },
+  expert: { posts:12, reals:5, checks:1, hints:false, timer:30, trickChoices:8, prefer:"hard",
+            name:{en:"Expert", zh:"极限"},
+            blurb:{en:"12 posts, 1 check each, 30 seconds per post. No clue markers.", zh:"12 条帖子,每条只能查 1 项,限时 30 秒,不标关键线索。"} },
+};
+const LEVEL_ORDER = ["easy","normal","hard","expert"];
+
+const TRICKS = {
+  bait:      { name:{en:"Emotional bait", zh:"情绪诱饵"},
+               desc:{en:"Words picked to make you angry or scared before you think.", zh:"专挑让人愤怒或害怕的字眼,让你来不及思考。"} },
+  cherry:    { name:{en:"Cherry-picking", zh:"断章取义"},
+               desc:{en:"One real detail, stretched or cut away from its context.", zh:"抓住一个真实的细节夸大,或把它从上下文里剪出来。"} },
+  authority: { name:{en:"Fake expert", zh:"假专家"},
+               desc:{en:"An impressive title that nobody can look up.", zh:"一个听起来很厉害、却查不到的头衔。"} },
+  image:     { name:{en:"Misleading photo", zh:"图片误导"},
+               desc:{en:"A real picture from another time or place, or an edited one.", zh:"真照片配错了时间地点,或者干脆是修过的图。"} },
+  imperson:  { name:{en:"Copycat account", zh:"山寨账号"},
+               desc:{en:"A name that looks official, with one small change.", zh:"名字看起来像官方,只差一个小细节。"} },
+  conspiracy:{ name:{en:"Hidden-truth hook", zh:"阴谋暗示"},
+               desc:{en:"“They don't want you to know” turns missing evidence into proof.", zh:"“他们不想让你知道”,把没有证据说成证据。"} },
+  urgency:   { name:{en:"Share pressure", zh:"催促转发"},
+               desc:{en:"“Share before it's deleted” leaves no time to check.", zh:"“赶紧转,马上要被删了”,让人没时间查证。"} },
+  crowd:     { name:{en:"Fake crowd", zh:"刷出来的人气"},
+               desc:{en:"Bots and bought likes make it look like everyone agrees.", zh:"用机器人和买来的赞,制造“大家都这么说”的假象。"} },
+};
+const TRICK_ORDER = ["bait","cherry","authority","image","imperson","conspiracy","urgency","crowd"];
+
+/* Act 1. Each game deals one true story. Every story runs through the same eight steps (and the
+   same eight tricks and multipliers), so the forger score means the same thing for all of them.
+   At each step the player picks honest, a mild version of the trick, or the full trick.
+   Per-move extras: <move>Show (text shown in the post instead of the button label),
+   <move>Art (illustration key), <move>Acc (account). */
+const FORGE = { base: 15, honestMult: 1.15 };
+const FORGE_STEPS = [
+  { slot:"headline", trick:"bait",       mildMult:1.9, mult:3.2, ask:{en:"Write the headline", zh:"写标题"} },
+  { slot:"detail",   trick:"cherry",     mildMult:1.6, mult:2.1, ask:{en:"Add a detail", zh:"补充一个细节"} },
+  { slot:"source",   trick:"authority",  mildMult:1.8, mult:2.6, ask:{en:"Name a source", zh:"给一个消息来源"} },
+  { slot:"image",    trick:"image",      mildMult:2.0, mult:3.4, ask:{en:"Attach a photo", zh:"配一张图"} },
+  { slot:"account",  trick:"imperson",   mildMult:1.8, mult:2.4, ask:{en:"Choose the account to post from", zh:"选一个发帖账号"} },
+  { slot:"hook",     trick:"conspiracy", mildMult:1.6, mult:2.5, ask:{en:"Add a question", zh:"加一句引导"} },
+  { slot:"closing",  trick:"urgency",    mildMult:1.7, mult:2.9, ask:{en:"Finish with a last line", zh:"写最后一句"} },
+  { slot:"crowd",    trick:"crowd",      mildMult:1.7, mult:2.8, ask:{en:"Give it a push", zh:"给它加点热度"} },
+];
+const OWN_ACCOUNT = { name:{en:"Jamie K.", zh:"Jamie K."}, handle:"@jamie.k", color:"#3A6EA5" };
+const T = (en, zh) => ({ en, zh });
+
+const STORIES = [
+  { id:"pizza",
+    title:T("The undercooked pizza", "没烤熟的披萨"),
+    truth:T("On Tuesday, one tray of pizza in the Maple Ridge High cafeteria came out undercooked. Staff replaced it within 10 minutes. Nobody got sick.",
+            "周二,枫岭中学食堂有一盘披萨没烤熟,工作人员 10 分钟内就换掉了,没有人身体不适。"),
+    headline:{ honest:T("One undercooked pizza tray replaced at Maple Ridge cafeteria", "枫岭中学食堂更换了一盘没烤熟的披萨"),
+               mild:T("Maple Ridge cafeteria served RAW pizza to students this week", "枫岭中学食堂本周给学生吃生披萨"),
+               fake:T("🚨 STUDENTS POISONED at Maple Ridge?! This is DISGUSTING 🤮", "🚨 枫岭中学学生集体中毒?!太恶心了 🤮") },
+    detail:{ honest:T("Staff swapped the tray within 10 minutes. No one got sick.", "工作人员 10 分钟内换掉了那盘披萨,没有人不舒服。"),
+             mild:T("The cafeteria has not said how many students ate it.", "食堂至今没说有多少学生吃了。"),
+             fake:T("Students were seen leaving the cafeteria early…", "有人看到学生提前离开了食堂……") },
+    source:{ honest:T("Source: the cafeteria notice board", "来源:食堂公告栏"),
+             mild:T("A parent who works in healthcare says this is serious", "一位在医疗行业工作的家长说,这事很严重"),
+             fake:T("“Dozens could be affected,” warns food safety expert Dr. K. Morrow", "食品安全专家 K. Morrow 博士警告:“可能有几十人受影响”") },
+    image:{ honest:T("The actual tray that was replaced", "被换掉的那盘披萨"), honestArt:"tray",
+            mild:T("A close-up of raw dough from a recipe site", "从菜谱网站找来的生面团特写"), mildArt:"dough",
+            fake:T("An ambulance outside a school (from a 2019 fire drill in another city)", "停在学校门口的救护车(其实是 2019 年另一座城市的消防演习)"), fakeArt:"ambulance" },
+    account:{ mild:T("A page you just invented, “Maple Ridge Parents Network”", "你刚编出来的主页“枫岭家长联盟”"),
+              mildAcc:{ name:T("Maple Ridge Parents Network", "枫岭家长联盟"), handle:"@MR_ParentsNetwork", color:"#2E6B4F" },
+              fake:T("A new account, @MapleRidgeHS_News (the real one is @MapleRidgeHS)", "新注册的 @MapleRidgeHS_News(真正的官方账号是 @MapleRidgeHS)"),
+              fakeAcc:{ name:T("Maple Ridge HS News", "枫岭中学新闻"), handle:"@MapleRidgeHS_News", color:"#7A1F2B" } },
+    hook:{ honest:T("The school posted a notice about it the same day.", "学校当天就发了通知。"),
+           mild:T("Why hasn't the school said more?", "学校为什么不多说点?"),
+           fake:T("What ELSE is the cafeteria hiding? They don't want you to know 👀", "食堂还瞒了什么?他们不想让你知道 👀") },
+    closing:{ honest:T("Details are on the school website.", "详情见学校官网。"),
+              mild:T("Tag a Maple Ridge parent 👇", "@ 一位枫岭家长 👇"),
+              fake:T("SHARE before the school deletes this!!! Parents need to know ⚠️", "趁学校还没删,赶紧转!!!家长必须知道 ⚠️") },
+    crowdLine:T("my cousin got sick too", "我表弟也不舒服") },
+
+  { id:"alarm",
+    title:T("The popcorn alarm", "爆米花警报"),
+    truth:T("On Thursday, burnt popcorn in the staff room set off a smoke alarm at Maple Ridge High. Everyone waited on the field for 15 minutes, then went back to class. There was no fire.",
+            "周四,枫岭中学教师休息室里有人把爆米花烤糊了,触发了烟雾报警器。全校到操场等了 15 分钟,然后回去上课。根本没有着火。"),
+    headline:{ honest:T("Burnt popcorn sets off smoke alarm at Maple Ridge High", "教师休息室爆米花烤糊,枫岭中学烟雾报警器响了"),
+               mild:T("Maple Ridge High EVACUATED this morning", "枫岭中学今早紧急疏散"),
+               fake:T("🔥 FIRE at Maple Ridge High!! Students RUNNING out of the building 😱", "🔥 枫岭中学着火了!!学生们正往楼外跑 😱") },
+    detail:{ honest:T("Classes restarted after 15 minutes. Nobody was hurt.", "15 分钟后恢复上课,没有人受伤。"),
+             mild:T("Students stood outside in the cold for a long time.", "学生们在冷风里站了好久。"),
+             fake:T("Smoke was seen near the science labs…", "有人看到科学实验室附近冒烟……") },
+    source:{ honest:T("Source: the principal's email to families", "来源:校长发给家长的邮件"),
+             mild:T("A student who was there says it was “really scary”", "一个在场的学生说“真的很吓人”"),
+             fake:T("“The building may not be safe,” warns fire-safety consultant R. Haines", "消防安全顾问 R. Haines 警告:“这栋楼可能不安全”") },
+    image:{ honest:T("The burnt popcorn bag", "那袋烤糊的爆米花"), honestArt:"popcorn",
+            mild:T("Students waiting on the field", "在操场上等待的学生"), mildArt:"field",
+            fake:T("A burning building (from a warehouse fire in another state)", "一栋着火的楼(其实是另一个州的仓库火灾)"), fakeArt:"fire" },
+    account:{ mild:T("A page you just made, “Maple Ridge Safety Watch”", "你刚建的主页“枫岭安全观察”"),
+              mildAcc:{ name:T("Maple Ridge Safety Watch", "枫岭安全观察"), handle:"@MR_SafetyWatch", color:"#8A4B14" },
+              fake:T("A new account, @MRHS_Alerts (the school's real one is @MapleRidgeHS)", "新注册的 @MRHS_Alerts(学校真正的账号是 @MapleRidgeHS)"),
+              fakeAcc:{ name:T("MRHS Alerts", "枫岭中学警报"), handle:"@MRHS_Alerts", color:"#7A1F2B" } },
+    hook:{ honest:T("The fire department confirmed there was no fire.", "消防部门已确认没有着火。"),
+           mild:T("Why did it take so long to let students back in?", "为什么过了那么久才让学生回去?"),
+           fake:T("What is the school NOT telling parents about that lab? 👀", "关于那间实验室,学校还有什么没告诉家长?👀") },
+    closing:{ honest:T("The school's email has the full details.", "详情见学校发给家长的邮件。"),
+              mild:T("Tag a Maple Ridge parent 👇", "@ 一位枫岭家长 👇"),
+              fake:T("SHARE NOW, parents need to pick up their kids!!! ⚠️", "马上转!!!家长赶紧去接孩子 ⚠️") },
+    crowdLine:T("I smelled smoke too", "我也闻到烟味了") },
+
+  { id:"game",
+    title:T("The overtime loss", "加时赛惜败"),
+    truth:T("On Friday, the Maple Ridge basketball team lost to Riverside 54–58 in overtime. It was a close, clean game, and both coaches shook hands afterward.",
+            "周五,枫岭中学篮球队在加时赛中以 54 比 58 输给了河畔中学。比赛很接近,也很干净,赛后两队教练还握了手。"),
+    headline:{ honest:T("Maple Ridge loses close overtime game to Riverside, 54–58", "枫岭加时惜败河畔,54 比 58"),
+               mild:T("Maple Ridge ROBBED by the refs in overtime", "加时赛裁判黑哨,枫岭被坑了"),
+               fake:T("🚨 Riverside PAID the refs?! Maple Ridge CHEATED out of a win 😡", "🚨 河畔买通了裁判?!枫岭的胜利被偷走了 😡") },
+    detail:{ honest:T("Both coaches shook hands and called it a great game.", "两队教练握手,都说这是一场好比赛。"),
+             mild:T("Maple Ridge got 6 fewer free throws than Riverside.", "枫岭的罚球比河畔少了 6 个。"),
+             fake:T("A fan saw the ref chatting with Riverside's coach before the game…", "有球迷看到赛前裁判和河畔的教练在聊天……") },
+    source:{ honest:T("Source: the league's official box score", "来源:联赛官方技术统计"),
+             mild:T("A former player says the refs “always favor Riverside”", "一位前球员说裁判“总是偏向河畔”"),
+             fake:T("“Clear signs of a fix,” says sports-integrity analyst Dr. M. Vance", "体育诚信分析师 M. Vance 博士:“明显有操纵比赛的迹象”") },
+    image:{ honest:T("The final scoreboard", "终场比分牌"), honestArt:"scoreboard",
+            mild:T("A blurry photo of the ref", "一张拍糊了的裁判照片"), mildArt:"blurref",
+            fake:T("A ref taking cash (a still from a movie)", "裁判收钱的画面(其实是电影截图)"), fakeArt:"cash" },
+    account:{ mild:T("A fan page you just made, “MR Hoops Truth”", "你刚建的球迷主页“枫岭篮球真相”"),
+              mildAcc:{ name:T("MR Hoops Truth", "枫岭篮球真相"), handle:"@mr_hoops_truth", color:"#C25B12" },
+              fake:T("A new account, @MapleRidgeAthletics_ (the real one has no underscore)", "新注册的 @MapleRidgeAthletics_(真正的账号末尾没有下划线)"),
+              fakeAcc:{ name:T("Maple Ridge Athletics", "枫岭中学体育部"), handle:"@MapleRidgeAthletics_", color:"#1F3F8A" } },
+    hook:{ honest:T("Maple Ridge plays again next Tuesday.", "枫岭下周二还有比赛。"),
+           mild:T("Why won't the league post the full game video?", "联赛为什么不放出完整比赛录像?"),
+           fake:T("Who REALLY decided this game? They'll never tell you 👀", "这场比赛到底是谁说了算?他们永远不会告诉你 👀") },
+    closing:{ honest:T("Highlights are on the school channel.", "精彩片段见学校频道。"),
+              mild:T("Tag a Maple Ridge fan 👇", "@ 一位枫岭球迷 👇"),
+              fake:T("SHARE before the league deletes this!!! 🏀", "趁联赛还没删,赶紧转!!!🏀") },
+    crowdLine:T("the refs were paid, everyone knows", "裁判收钱了,大家都知道") },
+
+  { id:"celebrity",
+    title:T("The coffee stop", "歌手买咖啡"),
+    truth:T("On Sunday, singer Luna Vale stopped at a coffee shop in Maple Ridge Mall for 10 minutes on her way to the airport. She took a few photos with fans and left.",
+            "周日,歌手 Luna Vale 在去机场的路上,在枫岭商场的一家咖啡店停留了 10 分钟,和几位粉丝合影后就走了。"),
+    headline:{ honest:T("Luna Vale stops for coffee at Maple Ridge Mall", "Luna Vale 在枫岭商场买了杯咖啡"),
+               mild:T("Luna Vale spotted in Maple Ridge! Is she staying?", "有人在枫岭看到 Luna Vale!她要留下来吗?"),
+               fake:T("🎤 Luna Vale FREE SHOW at Maple Ridge Mall TONIGHT!!! 💜", "🎤 Luna Vale 今晚在枫岭商场开免费演唱会!!!💜") },
+    detail:{ honest:T("She left for the airport 10 minutes later.", "10 分钟后她就去机场了。"),
+             mild:T("She asked the barista what there is to do around here.", "她问店员附近有什么好玩的。"),
+             fake:T("Workers were seen setting up a stage near the food court…", "有人看到工人在美食广场旁边搭舞台……") },
+    source:{ honest:T("Source: the coffee shop's own post", "来源:咖啡店自己发的帖子"),
+             mild:T("A fan who met her says “she loved it here”", "一位见到她的粉丝说“她很喜欢这里”"),
+             fake:T("“Big announcement tonight,” says music insider J. Park", "音乐圈内部人士 J. Park:“今晚有大消息”") },
+    image:{ honest:T("Her selfie with the barista", "她和店员的自拍"), honestArt:"selfie",
+            mild:T("A blurry photo of someone in a hoodie", "一张拍糊了的戴帽衫路人照"), mildArt:"hoodie",
+            fake:T("A stage inside a mall (from a concert in another city)", "商场里的舞台(其实是另一座城市的演唱会)"), fakeArt:"stage" },
+    account:{ mild:T("A fan page you just made, “Luna Vale Updates”", "你刚建的粉丝主页“Luna Vale 动态”"),
+              mildAcc:{ name:T("Luna Vale Updates", "Luna Vale 动态"), handle:"@lunavale_updates", color:"#9A4FB8" },
+              fake:T("A new account, @LunaVale_official_ (her real one is @LunaVale)", "新注册的 @LunaVale_official_(她真正的账号是 @LunaVale)"),
+              fakeAcc:{ name:T("Luna Vale", "Luna Vale"), handle:"@LunaVale_official_", color:"#6B3FA0" } },
+    hook:{ honest:T("Her next show is in Portland on Friday.", "她的下一场演出是周五在波特兰。"),
+           mild:T("Why is the mall so quiet about it?", "商场为什么对这事闭口不谈?"),
+           fake:T("The mall is trying to keep it secret. Ask yourself why 👀", "商场想瞒着大家。想想为什么 👀") },
+    closing:{ honest:T("The coffee shop posted photos on its page.", "咖啡店在主页上发了照片。"),
+              mild:T("Tag a Luna fan 👇", "@ 一位 Luna 的粉丝 👇"),
+              fake:T("SHARE before the mall fills up!!! First 500 fans only ⚠️", "赶紧转,去晚了就进不去了!!!只限前 500 名 ⚠️") },
+    crowdLine:T("omw to the mall rn", "我现在就去商场") },
+
+  { id:"coyote",
+    title:T("The coyote", "郊狼路过"),
+    truth:T("Early on Monday, a coyote crossed the Maple Ridge High soccer field and ran into the woods. Animal control says coyotes are common here and avoid people. No one was hurt.",
+            "周一清早,一只郊狼穿过枫岭中学的足球场,跑进了树林。动物管理部门说,这一带常有郊狼,它们会主动避开人。没有人受伤。"),
+    headline:{ honest:T("Coyote crosses Maple Ridge soccer field early Monday", "周一清早,一只郊狼穿过枫岭中学足球场"),
+               mild:T("Wild animal spotted on Maple Ridge campus", "枫岭中学校园里出现野兽"),
+               fake:T("🐺 WOLVES at Maple Ridge High?! Students in DANGER 😱", "🐺 枫岭中学出现狼群?!学生有危险 😱") },
+    detail:{ honest:T("It ran into the woods before school started.", "它在上课前就跑进树林了。"),
+             mild:T("Nobody knows where it went.", "没人知道它跑去哪了。"),
+             fake:T("A dog in the neighborhood has been missing since Monday…", "附近有一只狗从周一起就不见了……") },
+    source:{ honest:T("Source: the city's animal control page", "来源:市动物管理部门网页"),
+             mild:T("A neighbor says “it looked huge”", "一位邻居说“看起来特别大”"),
+             fake:T("“Packs are moving into town,” warns wildlife expert Dr. L. Grant", "野生动物专家 L. Grant 博士警告:“狼群正在进城”") },
+    image:{ honest:T("A trail-camera photo of the coyote", "红外相机拍到的郊狼"), honestArt:"coyote",
+            mild:T("A dark, blurry shape on the field", "球场上一个模糊的黑影"), mildArt:"blurshape",
+            fake:T("A wolf pack (from a national park documentary)", "一群狼(其实是国家公园纪录片的画面)"), fakeArt:"wolves" },
+    account:{ mild:T("A page you just made, “Maple Ridge Wildlife Alerts”", "你刚建的主页“枫岭野生动物预警”"),
+              mildAcc:{ name:T("Maple Ridge Wildlife Alerts", "枫岭野生动物预警"), handle:"@mr_wildlife_alerts", color:"#2E6B4F" },
+              fake:T("A new account, @MapleRidgeCity_News (the city's real one is @MapleRidgeCity)", "新注册的 @MapleRidgeCity_News(市政府真正的账号是 @MapleRidgeCity)"),
+              fakeAcc:{ name:T("Maple Ridge City News", "枫岭市新闻"), handle:"@MapleRidgeCity_News", color:"#23476B" } },
+    hook:{ honest:T("Animal control says to keep pets inside at night.", "动物管理部门提醒:晚上把宠物留在家里。"),
+           mild:T("Why hasn't the city warned families?", "市政府为什么不提醒家长?"),
+           fake:T("Why is the city hiding how many there REALLY are? 👀", "市政府为什么要隐瞒到底有多少只?👀") },
+    closing:{ honest:T("Animal control's page has tips for living near coyotes.", "动物管理部门网页上有和郊狼相处的建议。"),
+              mild:T("Tag a Maple Ridge parent 👇", "@ 一位枫岭家长 👇"),
+              fake:T("SHARE NOW, keep your kids home tomorrow!!! ⚠️", "马上转!!!明天别让孩子去上学 ⚠️") },
+    crowdLine:T("I heard howling last night too", "我昨晚也听到狼嚎了") },
+];
+const STORY_BY_ID = Object.fromEntries(STORIES.map(s => [s.id, s]));
+
+/* Merge one story into the eight-step template. The account and crowd steps share some text across stories. */
+function buildSteps(story) {
+  return FORGE_STEPS.map(st => {
+    if (st.slot === "account") return { ...st, ...story.account,
+      honest:T("Your own account, @jamie.k", "你自己的账号 @jamie.k"), honestAcc: OWN_ACCOUNT };
+    if (st.slot === "crowd") return { ...st,
+      honest:T("Leave it alone and see who shares it", "什么都不做,看谁会转"), honestShow:T("3 likes", "3 个赞"),
+      mild:T(`Ask five friends to comment “${story.crowdLine.en}”`, `让五个朋友来评论“${story.crowdLine.zh}”`),
+      mildShow:T(`5 comments: “${story.crowdLine.en}”`, `5 条评论:“${story.crowdLine.zh}”`),
+      fake:T("Buy 5,000 likes from a bot service", "从刷量平台买 5000 个赞"), fakeShow:T("5,000 likes in 10 minutes", "10 分钟内 5000 个赞") };
+    return { ...st, ...story[st.slot] };
+  });
+}
+const STEPS_BY_STORY = Object.fromEntries(STORIES.map(s => [s.id, buildSteps(s)]));
+
+/* Act 2. `level`: 1 obvious, 2 needs the right check, 3 looks like the opposite of what it is. */
+const POSTS = [
+  { id:"phones", truth:"fake", level:1, tricks:["urgency","bait"], art:"notice",
+    title:{en:"Phone ban on Monday", zh:"周一起禁手机"},
+    author:{ name:{en:"Student Voice", zh:"学生之声"}, handle:"@StudentVoice_Real", color:"#B4342C" },
+    time:{en:"2h", zh:"2 小时前"}, likes:"4.8k", shares:"2.1k",
+    text:{en:"🚨 BREAKING: Maple Ridge district is BANNING all phones starting MONDAY. They'll take them at the door 😡 SHARE before they delete this!!!",
+          zh:"🚨 突发:枫岭学区从周一起全面禁止带手机,进校门就没收 😡 快转,马上要被删了!!!"},
+    tools:{
+      profile: { key:true,  en:"Account created 3 days ago. 14 posts, all in capital letters. No link to any school or student group.", zh:"账号 3 天前才注册,共 14 条帖子,条条都是一串感叹号。没有关联任何学校或学生组织。" },
+      source:  { key:true,  en:"No link in the post. The district website's latest notice is a survey asking families what they think about phone rules. No decision has been made.", zh:"帖子里没有链接。学区官网最新的通知是一份问卷,征求家长对手机规定的看法,还没有做出任何决定。" },
+      image:   { key:true,  en:"The “notice” has no letterhead, date or signature. The same layout sits on a free meme-template site.", zh:"这份“通知”没有抬头、日期和签名。一模一样的版式出现在一个免费表情包模板网站上。" },
+      date:    { key:false, en:"Posted today at 2:14 a.m. Nothing odd about the date itself.", zh:"今天凌晨 2:14 发布。日期本身没有异常。" },
+      coverage:{ key:true,  en:"No local outlet reports a phone ban. The Courier's education page was updated today and doesn't mention one.", zh:"没有任何本地媒体报道禁手机的事。《信使报》教育版今天更新过,也没提到。" },
+      comments:{ key:false, en:"Hundreds of angry replies. A few ask for a link. Nobody posts one.", zh:"几百条愤怒的回复。有几个人问有没有链接,没有人给出来。" },
+    },
+    explain:{en:"There is no ban. The district is only running a survey. A 3-day-old account, capital letters and “share before they delete this” form a pattern, and you built the same one in the workshop.",
+             zh:"根本没有禁令,学区只是在做问卷。注册 3 天的账号、一连串感叹号、“马上要被删了”,这套组合你刚在造假工坊里亲手拼过。"} },
+
+  { id:"octopus", truth:"real", level:1, tricks:[], art:"octopus",
+    title:{en:"Octopus has three hearts", zh:"章鱼有三颗心脏"},
+    author:{ name:{en:"Tidewater Aquarium", zh:"潮汐水族馆"}, handle:"@TidewaterAquarium", color:"#12607A" },
+    time:{en:"1d", zh:"1 天前"}, likes:"912", shares:"140",
+    text:{en:"An octopus has three hearts and blue blood. Two hearts push blood through the gills, the third sends it around the body. 🐙",
+          zh:"章鱼有三颗心脏,血液是蓝色的。两颗心脏把血液送过鳃,第三颗把血液送往全身。🐙"},
+    tools:{
+      profile: { key:true,  en:"Verified organization. The account is 9 years old and posts about marine animals every day.", zh:"认证机构账号,注册 9 年,每天发布海洋动物相关内容。" },
+      source:  { key:true,  en:"Links to the aquarium's own education page.", zh:"链接指向水族馆自己的科普页面。" },
+      image:   { key:false, en:"The photo first appeared in the aquarium's own gallery last spring.", zh:"照片去年春天首次出现在水族馆自己的图库里。" },
+      date:    { key:false, en:"Posted yesterday. The fact itself has been known for decades.", zh:"昨天发布。这个事实本身几十年前就已为人所知。" },
+      coverage:{ key:true,  en:"Encyclopedias and university marine biology pages describe the same three hearts.", zh:"百科全书和大学海洋生物学网页都写着同样的三颗心脏。" },
+      comments:{ key:false, en:"Replies are split between “no way” and “we learned this in class.”", zh:"回复一半说“不可能”,一半说“课上学过”。" },
+    },
+    explain:{en:"True. It reads like clickbait, but a long-running verified account and matching reference sources back it up. Surprising and false are different things.",
+             zh:"是真的。它读起来像标题党,但运营多年的认证账号和一致的参考资料都能证明。让人吃惊,不等于是假的。"} },
+
+  { id:"flood", truth:"fake", level:2, tricks:["image"], art:"flood",
+    title:{en:"Mall under water", zh:"商场被淹"},
+    author:{ name:{en:"Riley 🌧", zh:"Riley 🌧"}, handle:"@riley_in_mr", color:"#5B6FB5" },
+    time:{en:"40m", zh:"40 分钟前"}, likes:"1.3k", shares:"860",
+    text:{en:"Riverside Mall is UNDER WATER right now 😱 stay home everyone", zh:"河滨商场现在全淹了 😱 大家都别出门"},
+    tools:{
+      profile: { key:false, en:"Personal account, 2 years old. Mostly reposts from accounts Riley doesn't know.", zh:"个人账号,注册 2 年,大多是转发陌生账号的内容。" },
+      source:  { key:true,  en:"The post names no source. The mall's own page shows normal opening hours today.", zh:"帖子没有说明来源。商场官方页面显示今天正常营业。" },
+      image:   { key:true,  en:"Reverse image search: this exact photo ran 6 years ago in news coverage of a storm in another country.", zh:"反向搜图:这张照片 6 年前就出现在另一个国家的风暴报道里。" },
+      date:    { key:true,  en:"The post is 40 minutes old. The earliest copy of the photo online is 6 years old.", zh:"帖子是 40 分钟前发的,但这张照片在网上最早的版本已有 6 年。" },
+      coverage:{ key:true,  en:"No news outlet and no city alert mentions flooding at the mall today.", zh:"没有任何媒体或市政预警提到商场今天被淹。" },
+      comments:{ key:true,  en:"One reply: “I'm at the mall right now, it's dry.” Most others are tagging friends.", zh:"有一条回复说:“我现在就在商场,地是干的。”其他大多在 @ 朋友。" },
+    },
+    explain:{en:"The photo is real, but it is six years old and from another country. Riley may honestly believe it. Sharing it would still spread a false alarm.",
+             zh:"照片是真的,但拍摄于六年前的另一个国家。Riley 可能真的信了,可转发出去依然是在散播假警报。"} },
+
+  { id:"voltz", truth:"fake", level:1, tricks:["authority"], art:"can",
+    title:{en:"Energy drinks raise scores", zh:"能量饮料提分"},
+    author:{ name:{en:"VOLTZ Deals", zh:"VOLTZ 优惠"}, handle:"@voltz_energy_deals", color:"#12141A" },
+    time:{en:"5h", zh:"5 小时前"}, likes:"3.2k", shares:"1.4k",
+    text:{en:"Dr. Alan Reeves, brain scientist at Northfield University: 3 energy drinks before a test raise scores by 40% 🧠⚡ Finals are coming. Link in bio.",
+          zh:"北原大学脑科学家 Alan Reeves 博士:考前喝 3 罐能量饮料,成绩提高 40% 🧠⚡ 期末要到了,链接在主页。"},
+    tools:{
+      profile: { key:true,  en:"This account sells VOLTZ through a discount link. Every post is an ad.", zh:"这个账号通过优惠链接卖 VOLTZ 饮料,每条帖子都是广告。" },
+      source:  { key:true,  en:"Northfield University's staff directory lists no Alan Reeves. No journal database contains such a study.", zh:"北原大学的教职工名录里没有 Alan Reeves,任何期刊数据库里也查不到这项研究。" },
+      image:   { key:false, en:"A stock product photo used by several shopping sites.", zh:"一张多个购物网站都在用的产品图。" },
+      date:    { key:false, en:"Posted two days before finals week.", zh:"发布于期末周开始前两天。" },
+      coverage:{ key:true,  en:"No science or health outlet reports this study. Health sites warn teens against large amounts of caffeine.", zh:"没有任何科学或健康类媒体报道过这项研究。健康网站反而提醒青少年不要大量摄入咖啡因。" },
+      comments:{ key:false, en:"The top replies are discount codes posted by other reseller accounts.", zh:"热门回复都是其他代理账号贴的优惠码。" },
+    },
+    explain:{en:"The scientist and the study don't exist, and the account earns money on every can. Large doses of caffeine can cause a racing heart and poor sleep, which hurts you before a test.",
+             zh:"这位科学家和这项研究都不存在,而这个账号每卖出一罐都有钱赚。大量咖啡因会让人心跳加快、睡不好,对考试只有坏处。"} },
+
+  { id:"library", truth:"real", level:2, tricks:[], art:null,
+    title:{en:"Library open till 8", zh:"图书馆开到 8 点"},
+    author:{ name:{en:"dani ✏️", zh:"dani ✏️"}, handle:"@dani.draws", color:"#C2772B" },
+    time:{en:"3h", zh:"3 小时前"}, likes:"87", shares:"12",
+    text:{en:"wait the library is actually staying open till 8pm during finals week?? finally 😭🙏", zh:"等等,期末周图书馆真的开到晚上 8 点??终于 😭🙏"},
+    tools:{
+      profile: { key:false, en:"Personal account, 2 years old. Posts about art class and life at Maple Ridge High.", zh:"个人账号,注册 2 年,发的都是美术课和枫岭中学的日常。" },
+      source:  { key:true,  en:"Maple Ridge High's official site, posted Monday: “Library open until 8 p.m. during finals week.”", zh:"枫岭中学官网周一发布:“期末周图书馆开放至晚上 8 点。”" },
+      image:   { key:false, en:"No image attached.", zh:"这条帖子没有图片。" },
+      date:    { key:true,  en:"Posted this week. Finals week starts next Monday, so the timing fits.", zh:"本周发布。期末周下周一开始,时间对得上。" },
+      coverage:{ key:true,  en:"The student newspaper ran a short item on the extended hours yesterday.", zh:"学生报纸昨天发了一条延长开放时间的简讯。" },
+      comments:{ key:false, en:"Classmates reply “finally” and ask whether the study rooms are open too.", zh:"同学们回复“终于”,还有人问自习室开不开。" },
+    },
+    explain:{en:"True. The tone is casual and full of emoji, but the school's own site says the same thing. Writing style tells you little. The source tells you a lot.",
+             zh:"是真的。语气随意、满屏表情,但学校官网说的是同一件事。文风说明不了什么,来源才说明问题。"} },
+
+  { id:"tickets", truth:"fake", level:1, tricks:["imperson","urgency"], art:"ticket",
+    title:{en:"Free concert tickets", zh:"免费演唱会门票"},
+    author:{ name:{en:"Luna Vale", zh:"Luna Vale"}, handle:"@LunaVale_official_", color:"#6B3FA0" },
+    time:{en:"1h", zh:"1 小时前"}, likes:"6.5k", shares:"3.9k",
+    text:{en:"Surprise!! FREE tickets to my Saturday show for the first 500 fans 💜 Log in with your Murmur password to claim: lunavale-tickets.win",
+          zh:"惊喜!!周六演出的免费门票,送给前 500 位粉丝 💜 用你的 Murmur 密码登录领取:lunavale-tickets.win"},
+    tools:{
+      profile: { key:true,  en:"The handle ends in an extra underscore. Created last week, 214 followers. The singer's real account, @LunaVale, is verified and has 8.1M followers.", zh:"账号名末尾多了一个下划线。上周才注册,只有 214 个粉丝。歌手的真实账号 @LunaVale 有认证标志和 810 万粉丝。" },
+      source:  { key:true,  en:"The link goes to lunavale-tickets.win, which is not the singer's official site. Her real tour page lists no free show.", zh:"链接指向 lunavale-tickets.win,不是歌手的官网。她真正的巡演页面上没有免费场次。" },
+      image:   { key:false, en:"The banner is the real tour poster with new text pasted on top.", zh:"横幅是真的巡演海报,只是贴上了新的文字。" },
+      date:    { key:false, en:"Posted one hour ago.", zh:"1 小时前发布。" },
+      coverage:{ key:true,  en:"The singer's verified account posted a warning yesterday about fake ticket giveaways.", zh:"歌手的认证账号昨天刚发过提醒:小心假的送票活动。" },
+      comments:{ key:true,  en:"Several replies say their accounts were locked after they logged in through the link.", zh:"好几条回复说,通过链接登录后账号被锁了。" },
+    },
+    explain:{en:"A copycat account: one extra underscore, and a link that asks for your password. This is phishing, built to steal accounts.",
+             zh:"这是山寨账号:名字只多了一个下划线,链接还要你输入密码。这是钓鱼,目的是盗号。"} },
+
+  { id:"gaming", truth:"fake", level:3, tricks:["cherry"], art:"chart",
+    title:{en:"Gaming improves grades", zh:"打游戏成绩更好"},
+    author:{ name:{en:"TeenTrend Daily", zh:"青春热搜"}, handle:"@teentrenddaily", color:"#D1478F" },
+    time:{en:"6h", zh:"6 小时前"}, likes:"9.1k", shares:"5.2k",
+    text:{en:"STUDY: Teens who game every day get BETTER grades 🎮📈 Show this to your parents.", zh:"研究证实:每天打游戏的青少年成绩更好 🎮📈 快拿给你爸妈看。"},
+    tools:{
+      profile: { key:false, en:"Entertainment page, 4 years old. Posts quizzes and viral headlines.", zh:"娱乐类账号,注册 4 年,发的是小测验和热门标题。" },
+      source:  { key:true,  en:"The study is real (Westbrook University). It found slightly higher math scores for teens who played puzzle games under 1 hour a day. Above 3 hours a day, grades dropped.", zh:"研究是真的(西溪大学)。它发现每天玩益智游戏不到 1 小时的青少年,数学成绩略高;每天超过 3 小时,成绩反而下降。" },
+      image:   { key:true,  en:"The chart shows only the under-1-hour group. The original has three more bars, all lower.", zh:"图表只显示了“不到 1 小时”这一组。原图还有三根柱子,都更低。" },
+      date:    { key:false, en:"The study came out last year. The post is from today.", zh:"研究是去年发表的,帖子是今天发的。" },
+      coverage:{ key:true,  en:"Science news sites covering the same study lead with the 3-hour warning.", zh:"报道同一项研究的科学新闻网站,重点写的是“超过 3 小时”的警告。" },
+      comments:{ key:false, en:"Mostly “sending this to my mom.” One reply links the original paper.", zh:"大多是“这就转给我妈”。有一条回复贴了原始论文的链接。" },
+    },
+    explain:{en:"A real study, trimmed to the one part that sounds good. The full finding: a small benefit under an hour a day, and lower grades past three hours.",
+             zh:"研究是真的,但只剪出了最好听的那一段。完整结论是:每天不到一小时略有好处,超过三小时成绩下降。"} },
+
+  { id:"bikelane", truth:"real", level:1, tricks:[], art:"bike",
+    title:{en:"Bike lane vote", zh:"自行车道表决"},
+    author:{ name:{en:"Maple Ridge Courier", zh:"枫岭信使报"}, handle:"@MRCourier", color:"#2B3A55" },
+    time:{en:"4h", zh:"4 小时前"}, likes:"230", shares:"48",
+    text:{en:"City council voted 5–2 last night to add a protected bike lane on Oak Street. Construction starts in spring.", zh:"市议会昨晚以 5 比 2 表决通过,在橡树街增设带隔离的自行车道,春季动工。"},
+    tools:{
+      profile: { key:true,  en:"Local newspaper, verified, account 11 years old.", zh:"本地报纸,已认证,账号注册 11 年。" },
+      source:  { key:true,  en:"The council's published minutes record the same 5–2 vote.", zh:"市议会公布的会议记录里是同样的 5 比 2。" },
+      image:   { key:false, en:"Photo credited to the paper's own photographer, taken at last night's meeting.", zh:"照片署名为该报摄影记者,拍摄于昨晚的会议现场。" },
+      date:    { key:false, en:"The vote was last night. The post went up this morning.", zh:"表决在昨晚,帖子今早发布。" },
+      coverage:{ key:true,  en:"A second local outlet and the local radio station report the same vote.", zh:"另一家本地媒体和本地电台报道了同样的表决结果。" },
+      comments:{ key:false, en:"Residents argue about parking. Nobody disputes that the vote happened.", zh:"居民们在争论停车位的问题,没有人质疑表决本身。" },
+    },
+    explain:{en:"True. An established outlet, the council's own minutes and a second report all agree.", zh:"是真的。老牌媒体、议会自己的会议记录和另一家报道,三者一致。"} },
+
+  { id:"snowday", truth:"fake", level:2, tricks:["image"], art:"snow",
+    title:{en:"No school tomorrow", zh:"明天停课"},
+    author:{ name:{en:"MR Memes", zh:"枫岭表情包"}, handle:"@mr_memes", color:"#4B8FBF" },
+    time:{en:"30m", zh:"30 分钟前"}, likes:"7.2k", shares:"4.4k",
+    text:{en:"NO SCHOOL TOMORROW ❄️❄️ district just announced it, see screenshot 👇 you're welcome", zh:"明天不上课 ❄️❄️ 学区刚发的通知,看截图 👇 不用谢"},
+    tools:{
+      profile: { key:false, en:"Meme page, 3 years old. Mostly jokes about school life.", zh:"表情包账号,注册 3 年,发的大多是校园段子。" },
+      source:  { key:true,  en:"The district website says today: “All schools open on a normal schedule tomorrow.”", zh:"学区官网今天写着:“明天所有学校正常上课。”" },
+      image:   { key:true,  en:"The screenshot is a real district announcement from a snowstorm two years ago. The date line has been cropped off.", zh:"截图确实是学区的通知,但那是两年前一场暴雪时发的,日期那一行被裁掉了。" },
+      date:    { key:true,  en:"The post is 30 minutes old. Tomorrow's forecast: cloudy, no snow.", zh:"帖子是 30 分钟前发的。明天的天气预报:多云,无雪。" },
+      coverage:{ key:true,  en:"The local radio station's closure list has no Maple Ridge schools on it.", zh:"本地电台的停课名单上没有枫岭的学校。" },
+      comments:{ key:true,  en:"A few replies say “this is from two years ago lol.” Most are celebrating.", zh:"有几条回复说“这是两年前的吧,笑死”。大多数人在庆祝。" },
+    },
+    explain:{en:"A real announcement, two years old, with the date cropped out. Old screenshots come back every winter because people want them to be true.",
+             zh:"通知是真的,但已经是两年前的了,日期还被裁掉。旧截图每年冬天都会回来,因为大家希望它是真的。"} },
+
+  { id:"wombat", truth:"real", level:3, tricks:[], art:"cubes",
+    title:{en:"Wombats poop cubes", zh:"袋熊的方形便便"},
+    author:{ name:{en:"factz 4 u", zh:"冷知识速递"}, handle:"@factz4u", color:"#8A5A2B" },
+    time:{en:"8h", zh:"8 小时前"}, likes:"15k", shares:"6.3k",
+    text:{en:"wombats poop CUBES. like actual cubes. nature is broken 🟫🟫🟫", zh:"袋熊拉的便便是方的。真的是方块。大自然出 bug 了 🟫🟫🟫"},
+    tools:{
+      profile: { key:false, en:"Fun-fact page, 1 year old. Never names its sources. At least two earlier posts were debunked.", zh:"趣味冷知识账号,注册 1 年,从不标来源,之前至少有两条帖子被辟谣过。" },
+      source:  { key:false, en:"The post names no source at all.", zh:"帖子完全没有提来源。" },
+      image:   { key:false, en:"The photo comes from a wildlife sanctuary's public gallery.", zh:"照片来自一家野生动物保护区的公开图库。" },
+      date:    { key:false, en:"Posted 8 hours ago. Nothing ties the claim to a date.", zh:"8 小时前发布。这个说法和日期没有关系。" },
+      coverage:{ key:true,  en:"A peer-reviewed study and several science magazines describe wombats' cube-shaped droppings.", zh:"一篇经过同行评议的论文和多家科学杂志都介绍过袋熊的方形粪便。" },
+      comments:{ key:true,  en:"Half the replies say “fake.” One links an encyclopedia entry that agrees with the post.", zh:"一半回复说“假的”。有一条贴了百科词条,内容和帖子一致。" },
+    },
+    explain:{en:"True, even though the account is sloppy. A weak source doesn't make a claim false. Other coverage settles it: scientists have studied exactly this.",
+             zh:"是真的,虽然这个账号很不靠谱。来源差,不代表说法一定是假的。看看其他报道就清楚了:科学家专门研究过这件事。"} },
+
+  { id:"studyapp", truth:"fake", level:2, tricks:["crowd"], art:"hearts",
+    title:{en:"Everyone uses StudyBuddy+", zh:"人人都在用 StudyBuddy+"},
+    author:{ name:{en:"StudyBuddy+ Fans", zh:"StudyBuddy+ 粉丝团"}, handle:"@studybuddyplus_fan", color:"#E07A1F" },
+    time:{en:"3h", zh:"3 小时前"}, likes:"50k", shares:"9.9k",
+    text:{en:"EVERYONE at Maple Ridge is switching to StudyBuddy+ 📲 50,000 downloads this week!! don't be the last one in your class", zh:"枫岭的同学全都在换 StudyBuddy+ 📲 这周下载量 5 万!!别当班里最后一个"},
+    tools:{
+      profile: { key:true,  en:"The account is 2 weeks old and follows nobody. Its only posts promote this one app.", zh:"账号注册才 2 周,没有关注任何人,所有帖子都在推这一个应用。" },
+      source:  { key:true,  en:"The app store page shows “1,000+ downloads” in total.", zh:"应用商店页面显示的总下载量是“1000+”。" },
+      image:   { key:false, en:"A stock illustration of a phone screen.", zh:"一张手机屏幕的素材插图。" },
+      date:    { key:true,  en:"Nearly all 50,000 likes arrived within one hour, around 3 a.m.", zh:"5 万个赞几乎全是在凌晨 3 点左右的一个小时内出现的。" },
+      coverage:{ key:false, en:"No tech site or school channel mentions the app.", zh:"没有任何科技网站或学校渠道提到过这个应用。" },
+      comments:{ key:true,  en:"Forty replies arrived within two minutes, almost word for word: “Best app ever!!” None of the accounts has a profile photo.", zh:"两分钟内出现了四十条回复,内容几乎一字不差:“史上最好用!!”这些账号都没有头像。" },
+    },
+    explain:{en:"The crowd is rented. Likes that arrive in one hour at 3 a.m. and copy-pasted replies come from bots. Maple Ridge has 24,000 people, so 50,000 local downloads is impossible.",
+             zh:"这些人气是买来的。凌晨 3 点一小时内涌来的赞、复制粘贴的回复,都出自机器人。再说枫岭镇一共才 2.4 万人,哪来 5 万本地下载。"} },
+
+  { id:"inspection", truth:"fake", level:2, tricks:["conspiracy"], art:"blurdoc",
+    title:{en:"Hidden inspection reports", zh:"被隐瞒的检查报告"},
+    author:{ name:{en:"truthseeker", zh:"真相猎人"}, handle:"@truthseeker_mr", color:"#3D3D4E" },
+    time:{en:"7h", zh:"7 小时前"}, likes:"2.6k", shares:"1.9k",
+    text:{en:"Ever wonder why the Maple Ridge cafeteria NEVER shows its inspection reports? 🤔 They don't want you to see this. Do your own research.", zh:"有没有想过,枫岭中学食堂为什么从来不公开卫生检查报告?🤔 他们不想让你看到这个。自己去查吧。"},
+    tools:{
+      profile: { key:true,  en:"Anonymous account, 5 months old. Every post asks why “they” are hiding something.", zh:"匿名账号,注册 5 个月。每条帖子都在问“他们”为什么要隐瞒。" },
+      source:  { key:true,  en:"The county health department publishes every inspection online. Maple Ridge High's latest, from last month: passed, 96 out of 100.", zh:"县卫生部门把每次检查结果都公布在网上。枫岭中学上个月的最新结果:合格,96 分(满分 100)。" },
+      image:   { key:true,  en:"Sharpened, the blurry “report” turns out to be a furniture order form.", zh:"把这张模糊的“报告”调清晰后,发现是一张家具订货单。" },
+      date:    { key:false, en:"Posted 7 hours ago, during a week of cafeteria rumors.", zh:"7 小时前发布,正赶上这周关于食堂的谣言满天飞。" },
+      coverage:{ key:true,  en:"No local outlet reports any problem with the cafeteria.", zh:"没有任何本地媒体报道食堂有问题。" },
+      comments:{ key:false, en:"Replies add their own guesses. None includes evidence.", zh:"回复里大家各自补充猜测,没有一条带证据。" },
+    },
+    explain:{en:"The reports are public and the cafeteria passed. The post never states a fact you could check. It only asks a question and lets you fill in the rest.",
+             zh:"检查报告是公开的,食堂也合格了。这条帖子没有说出任何可以查证的事实,只是抛出一个问题,让你自己脑补剩下的部分。"} },
+
+  { id:"quote", truth:"fake", level:3, tricks:["cherry"], art:"quote",
+    title:{en:"The principal's quote", zh:"校长语录"},
+    author:{ name:{en:"MR Confessions", zh:"枫岭树洞"}, handle:"@mr_confessions", color:"#A8324A" },
+    time:{en:"5h", zh:"5 小时前"}, likes:"3.4k", shares:"2.2k",
+    text:{en:"Principal Ortiz actually said this: “Students who fail one test should repeat the year.” 😳 she's out of her mind", zh:"Ortiz 校长原话:“一次考试不及格的学生应该留级。”😳 她是不是疯了"},
+    tools:{
+      profile: { key:false, en:"Anonymous confession page. Anyone can submit a post and nothing is checked.", zh:"匿名树洞账号,谁都可以投稿,没有任何审核。" },
+      source:  { key:true,  en:"The school newsletter has the full sentence: “Nobody should think that students who fail one test should repeat the year. We offer retakes.”", zh:"学校通讯里有完整的句子:“不要以为一次考试不及格的学生应该留级,我们提供补考。”" },
+      image:   { key:false, en:"The quote card was made in a free quote-maker app, using the principal's yearbook photo.", zh:"这张语录图是用免费的语录生成应用做的,配的是校长的年鉴照片。" },
+      date:    { key:false, en:"The interview ran three weeks ago. The post is from today.", zh:"采访是三周前发表的,帖子是今天发的。" },
+      coverage:{ key:true,  en:"The student newspaper printed the whole interview. Her point was the opposite of the clipped quote.", zh:"学生报纸刊登了完整采访。她的意思和这句被剪出来的话正好相反。" },
+      comments:{ key:true,  en:"Mostly outrage. One student posts the full sentence and gets three likes.", zh:"大多在骂。有个学生贴出了完整的句子,只得到三个赞。" },
+    },
+    explain:{en:"Her real words, with the first half cut off. The full sentence says the opposite. A quote that makes someone sound outrageous is worth tracing to the original.",
+             zh:"话确实是她说的,但前半句被剪掉了,完整的句子意思正相反。一句让人显得很离谱的引语,值得去找原文。"} },
+
+  { id:"boilwater", truth:"real", level:2, tricks:[], art:"water",
+    title:{en:"Boil-water notice", zh:"自来水烧开通知"},
+    author:{ name:{en:"Maple Ridge Water", zh:"枫岭水务"}, handle:"@MapleRidgeWater", color:"#1F6FB5" },
+    time:{en:"2h", zh:"2 小时前"}, likes:"310", shares:"1.2k",
+    text:{en:"⚠️ BOIL-WATER NOTICE for east Maple Ridge until Thursday. Boil tap water for 1 minute before drinking or cooking. Please share with neighbors.", zh:"⚠️ 枫岭东区即日起至周四,自来水请烧开后使用:饮用或做饭前请煮沸 1 分钟。请转告邻居。"},
+    tools:{
+      profile: { key:true,  en:"The city utility's verified account, 7 years old.", zh:"市水务部门的认证账号,注册 7 年。" },
+      source:  { key:true,  en:"The city website shows the same notice in a banner on its front page.", zh:"市政府官网首页的横幅里是同一条通知。" },
+      image:   { key:false, en:"The map graphic appears on the utility's own alert page.", zh:"这张地图出自水务部门自己的预警页面。" },
+      date:    { key:true,  en:"Issued this morning. The end date, Thursday, matches the city's notice.", zh:"今天上午发布。截止日期是周四,和市政府的通知一致。" },
+      coverage:{ key:true,  en:"The Courier and the local radio station both carry the notice.", zh:"《信使报》和本地电台都发了这条通知。" },
+      comments:{ key:false, en:"Residents ask which streets are affected. The utility answers each one.", zh:"居民在问涉及哪些街道,水务部门逐条回复。" },
+    },
+    explain:{en:"True. Real emergencies sound urgent too. This one comes from an official account, and you can confirm it in three other places.",
+             zh:"是真的。真正的紧急通知同样语气急迫。区别在于它来自官方账号,而且能在另外三个地方得到印证。"} },
+
+  { id:"shark", truth:"fake", level:1, tricks:["image"], art:"shark",
+    title:{en:"Shark on Main Street", zh:"主街上的鲨鱼"},
+    author:{ name:{en:"Kyle Storms", zh:"Kyle 追风"}, handle:"@stormchaser_kyle", color:"#2E7D6B" },
+    time:{en:"9h", zh:"9 小时前"}, likes:"22k", shares:"11k",
+    text:{en:"SHARK on Main Street after last night's storm!!! 🦈 I can't believe what I'm seeing", zh:"昨晚暴雨之后,主街上出现了鲨鱼!!!🦈 我不敢相信自己的眼睛"},
+    tools:{
+      profile: { key:false, en:"Storm-video account, 1 year old. Some of its clips are real.", zh:"追风暴视频的账号,注册 1 年,有些视频是真的。" },
+      source:  { key:true,  en:"The city says Main Street had puddles last night and no flooding.", zh:"市政府表示,主街昨晚只有积水,没有被淹。" },
+      image:   { key:true,  en:"The street matches a stock photo of a flooded road. The fin matches a well-known wildlife photo. Its edges are blurred.", zh:"街道和一张被淹道路的素材图一致,鱼鳍和一张著名的野生动物照片一致,边缘还是糊的。" },
+      date:    { key:false, en:"Posted the morning after the storm.", zh:"暴雨后的第二天早上发布。" },
+      coverage:{ key:true,  en:"No outlet reports a shark. A fact-checking site lists “shark on a flooded street” as a hoax that returns after every big storm.", zh:"没有媒体报道鲨鱼。一家事实核查网站把“被淹街道上的鲨鱼”列为每次大暴雨后都会重现的老谣言。" },
+      comments:{ key:false, en:"Mostly “omg.” One reply: “same shark as last year.”", zh:"大多是“天哪”。有一条回复:“这鲨鱼跟去年那条是同一条。”" },
+    },
+    explain:{en:"An edited image: a stock street photo with a famous shark fin pasted in. This hoax comes back after almost every big storm.",
+             zh:"这是合成图:一张街道素材图,贴上了一只著名的鲨鱼鳍。几乎每次大暴雨之后,这个谣言都会回来一次。"} },
+
+  { id:"laptops", truth:"real", level:2, tricks:[], art:"laptop",
+    title:{en:"Free laptop loans", zh:"免费借电脑"},
+    author:{ name:{en:"Nadia R.", zh:"Nadia R."}, handle:"@nadia.reads", color:"#7B5EA7" },
+    time:{en:"1d", zh:"1 天前"}, likes:"140", shares:"95",
+    text:{en:"PSA: the city library lends out laptops FOR FREE. 2 weeks at a time, you just need a library card. Why does nobody talk about this??", zh:"提醒一下:市图书馆可以免费借笔记本电脑,一次两周,有借书证就行。怎么没人说这事??"},
+    tools:{
+      profile: { key:false, en:"Personal account, 6 years old. Posts about books and her kids' school.", zh:"个人账号,注册 6 年,发的是读书和孩子学校的事。" },
+      source:  { key:true,  en:"The library's website has a page called “Laptop lending”: two-week loans with a library card.", zh:"图书馆官网有一个“笔记本电脑借用”页面:凭借书证可借两周。" },
+      image:   { key:false, en:"The photo matches pictures of the front desk on the library's website.", zh:"照片和图书馆官网上的服务台照片一致。" },
+      date:    { key:false, en:"Posted yesterday. The program started last fall.", zh:"昨天发布。这个项目去年秋天就开始了。" },
+      coverage:{ key:true,  en:"The Courier covered the program's launch last fall.", zh:"《信使报》去年秋天报道过这个项目启动。" },
+      comments:{ key:true,  en:"Several replies say they borrowed one last week. One warns there is a waiting list.", zh:"好几条回复说上周刚借到,还有人提醒要排队。" },
+    },
+    explain:{en:"True. An offer that sounds too good is worth checking, and this one checks out on the library's own site.",
+             zh:"是真的。听起来好得不像真的,就值得查一查,而这一条在图书馆自己的网站上就能查到。"} },
+
+  /* ---- added in round 3 ---- */
+  { id:"bluetooth", truth:"fake", level:1, tricks:["urgency","bait"], art:"lock",
+    title:{en:"Bluetooth photo hackers", zh:"蓝牙偷照片"},
+    author:{ name:{en:"Aunt Debbie", zh:"Debbie 阿姨"}, handle:"@debbie.mr", color:"#B0577A" },
+    time:{en:"4h", zh:"4 小时前"}, likes:"610", shares:"3.3k",
+    text:{en:"⚠️⚠️ WARNING from a police friend: hackers in Maple Ridge are stealing photos from phones with Bluetooth ON. Turn it off NOW and forward this to 10 people!!",
+          zh:"⚠️⚠️ 警察朋友提醒:枫岭有黑客通过蓝牙偷手机里的照片!马上关掉蓝牙,再转给 10 个人!!"},
+    tools:{
+      profile: { key:false, en:"A real person, 8 years on Murmur. Mostly family photos and recipes.", zh:"真实的个人账号,用 Murmur 8 年了,发的大多是家庭照片和菜谱。" },
+      source:  { key:true,  en:"“A police friend” is never named. Maple Ridge Police have posted nothing about Bluetooth theft.", zh:"“警察朋友”从头到尾没有名字。枫岭警局没有发过任何关于蓝牙偷照片的消息。" },
+      image:   { key:false, en:"The lock graphic is a free clip-art icon.", zh:"那个锁的图标是免费剪贴画。" },
+      date:    { key:true,  en:"The same wording, with other town names, has circulated since 2015.", zh:"一模一样的文字换个地名,从 2015 年起就在网上流传。" },
+      coverage:{ key:true,  en:"A fact-checking site has rated this exact message false four times, each time in a different town.", zh:"事实核查网站已经四次判定这段文字是假的,每次都换了一个城镇。" },
+      comments:{ key:false, en:"Lots of “thanks for the warning!” and “shared.”", zh:"满屏都是“谢谢提醒!”和“已转”。" },
+    },
+    explain:{en:"A chain message. No named source, a deadline-style warning and “forward to 10 people” are the giveaways. Aunt Debbie means well, which is exactly why these spread.",
+             zh:"这是典型的连锁信息。没有具名来源、制造恐慌的警告、“转给 10 个人”,都是破绽。Debbie 阿姨是好心,而这正是这类消息传得快的原因。"} },
+
+  { id:"murmurfee", truth:"fake", level:1, tricks:["urgency"], art:null,
+    title:{en:"Murmur will charge $5", zh:"Murmur 要收费"},
+    author:{ name:{en:"Marcus T.", zh:"Marcus T."}, handle:"@marcus_t", color:"#3E7C59" },
+    time:{en:"1h", zh:"1 小时前"}, likes:"1.1k", shares:"8.7k",
+    text:{en:"Murmur starts charging $5/month on Friday. To keep your account free, REPOST this with the words “I do not consent.” It worked for my cousin.",
+          zh:"Murmur 周五起每月收费 5 美元。想继续免费,就转发这条并写上“我不同意”。我表哥已经这么做了,有用。"},
+    tools:{
+      profile: { key:false, en:"An ordinary student account, 3 years old.", zh:"普通学生账号,注册 3 年。" },
+      source:  { key:true,  en:"Murmur's official help page says: “Murmur is free and we have no plans to charge for accounts.”", zh:"Murmur 官方帮助页写着:“Murmur 是免费的,我们没有向账号收费的计划。”" },
+      image:   { key:false, en:"No image attached.", zh:"这条帖子没有图片。" },
+      date:    { key:false, en:"Posted an hour ago. It names no date for the change except “Friday.”", zh:"1 小时前发布。除了“周五”,没有说明具体哪天收费。" },
+      coverage:{ key:true,  en:"Tech news sites call this a hoax that returns every year. Reposting a sentence can't change an app's terms.", zh:"科技新闻网站说这是每年都会回来的老谣言。转发一句话不可能改变应用的服务条款。" },
+      comments:{ key:false, en:"Thousands of “I do not consent” replies.", zh:"几千条回复都在写“我不同意”。" },
+    },
+    explain:{en:"A yearly hoax. The deadline pushes you to repost before you think, and the “magic sentence” can't do anything.",
+             zh:"每年都会出现的谣言。截止日期逼你先转再想,那句“咒语”其实什么用都没有。"} },
+
+  { id:"prom", truth:"fake", level:2, tricks:["cherry"], art:"minutes",
+    title:{en:"Prom is cancelled", zh:"舞会取消了"},
+    author:{ name:{en:"Class of '27 Updates", zh:"27 届动态"}, handle:"@mr_classof27", color:"#C2477E" },
+    time:{en:"2h", zh:"2 小时前"}, likes:"5.6k", shares:"2.8k",
+    text:{en:"It's official: the school board CUT prom 💔 it's right there in the meeting notes (pic). Thanks for nothing.",
+          zh:"正式确认:校董会把毕业舞会砍了 💔 会议记录里白纸黑字(见图)。谢谢你们啊。"},
+    tools:{
+      profile: { key:false, en:"Student-run page, 2 years old. Usually posts event photos.", zh:"学生自己运营的账号,注册 2 年,平时发活动照片。" },
+      source:  { key:true,  en:"The full minutes say: “The board voted to cut the prom decoration budget by 30%. Prom will go ahead on May 16.”", zh:"完整的会议记录写着:“校董会投票决定把舞会装饰预算削减 30%,舞会照常于 5 月 16 日举行。”" },
+      image:   { key:true,  en:"The photo shows only the line “Budget item: prom, reduced.” The next line is cut off.", zh:"照片只拍到“预算项目:舞会,削减”这一行,下一行被裁掉了。" },
+      date:    { key:false, en:"The meeting was Tuesday. The post is from today.", zh:"会议在周二,帖子是今天发的。" },
+      coverage:{ key:true,  en:"The student newspaper reports a smaller decoration budget. Prom is still on.", zh:"学生报纸报道的是装饰预算减少,舞会照常举行。" },
+      comments:{ key:false, en:"Furious replies. One person asks for the full page. No answer.", zh:"满屏愤怒。有人要求看完整的那一页,没人回应。" },
+    },
+    explain:{en:"Real document, wrong conclusion. Cutting one budget line became “cutting prom.” The full page says prom goes ahead.",
+             zh:"文件是真的,结论是错的。削减一项预算被说成了“砍掉舞会”。完整那一页写着舞会照常。"} },
+
+  { id:"ranking", truth:"fake", level:2, tricks:["imperson"], art:"headline",
+    title:{en:"Worst school in the state", zh:"全州最差学校"},
+    author:{ name:{en:"MR Courier News", zh:"枫岭信使报新闻"}, handle:"@MRCourier_News", color:"#2B3A55" },
+    time:{en:"3h", zh:"3 小时前"}, likes:"2.9k", shares:"3.1k",
+    text:{en:"Maple Ridge High ranked WORST high school in the state in new report. Read more: mrcourier-news.info",
+          zh:"最新报告:枫岭中学被评为全州最差高中。详情:mrcourier-news.info"},
+    tools:{
+      profile: { key:true,  en:"Created 9 days ago. The real paper is @MRCourier, verified, 11 years old. This one copies its logo and colors.", zh:"9 天前注册。真正的报纸账号是 @MRCourier,已认证,注册 11 年。这个号照抄了它的标志和配色。" },
+      source:  { key:true,  en:"mrcourier-news.info is not the paper's website. The state's school report puts Maple Ridge in the middle of the list.", zh:"mrcourier-news.info 不是报纸的官网。州教育报告里枫岭中学排在中游。" },
+      image:   { key:false, en:"The headline graphic uses a newspaper template anyone can download.", zh:"标题图用的是谁都能下载的报纸模板。" },
+      date:    { key:false, en:"Posted 3 hours ago.", zh:"3 小时前发布。" },
+      coverage:{ key:true,  en:"The real @MRCourier has posted nothing like it. Its latest school story is about the robotics team.", zh:"真正的 @MRCourier 没发过类似消息,它最近一篇学校报道是关于机器人队的。" },
+      comments:{ key:false, en:"Parents argue about whether to move. A few tag the real Courier.", zh:"家长们在争论要不要搬家,有几个人 @ 了真正的《信使报》。" },
+    },
+    explain:{en:"A copycat of the local paper: one extra word in the handle and a look-alike website. Check the handle before you trust the logo.",
+             zh:"这是本地报纸的山寨号:账号名多了一个词,网站也是仿的。先看账号名,别光看标志。"} },
+
+  { id:"poll", truth:"fake", level:3, tricks:["cherry"], art:"pie",
+    title:{en:"80% want a 4-day week", zh:"八成学生要四天上学"},
+    author:{ name:{en:"Student Pulse MR", zh:"枫岭学生观察"}, handle:"@studentpulse_mr", color:"#5A4FCF" },
+    time:{en:"5h", zh:"5 小时前"}, likes:"3.8k", shares:"1.7k",
+    text:{en:"NEW POLL: 80% of Maple Ridge students want a 4-day school week. The school board has to listen now 📊",
+          zh:"最新民调:80% 的枫岭学生希望一周只上四天学。校董会现在必须听我们的了 📊"},
+    tools:{
+      profile: { key:false, en:"Opinion page run by two students. Has posted for a year.", zh:"两个学生运营的观点类账号,发帖一年了。" },
+      source:  { key:true,  en:"The “poll” was a story-sticker vote on this account. 40 people voted. Maple Ridge High has 1,600 students.", zh:"这次“民调”其实是这个账号快拍里的投票贴纸,一共 40 人投票。枫岭中学有 1600 名学生。" },
+      image:   { key:false, en:"The pie chart was made in a free chart app.", zh:"饼图是用免费图表应用做的。" },
+      date:    { key:false, en:"The vote closed yesterday.", zh:"投票昨天结束。" },
+      coverage:{ key:true,  en:"The school's own survey last spring, answered by 1,100 students, found 46% in favor.", zh:"学校去年春天自己做的调查有 1100 名学生作答,支持的占 46%。" },
+      comments:{ key:true,  en:"One reply: “wait, was this the story poll? I voted twice lol.”", zh:"有一条回复:“等等,是快拍那个投票吗?我投了两次哈哈。”" },
+    },
+    explain:{en:"The number is real, but it comes from 40 followers who chose to vote, some of them twice. A small, self-picked group can't speak for 1,600 students.",
+             zh:"数字是真的,但只来自 40 个主动投票的粉丝,还有人投了两次。一小群自愿参与的人,代表不了 1600 名学生。"} },
+
+  { id:"lostdog", truth:"fake", level:2, tricks:["image","bait"], art:"dog",
+    title:{en:"Injured dog needs surgery", zh:"受伤小狗等手术费"},
+    author:{ name:{en:"Help Biscuit 🐾", zh:"救救饼干 🐾"}, handle:"@help_biscuit_mr", color:"#A0522D" },
+    time:{en:"6h", zh:"6 小时前"}, likes:"4.1k", shares:"2.5k",
+    text:{en:"Found this sweet boy hit by a car on Elm Street 😭 he needs surgery TONIGHT or he won't make it. Please send anything to the payment link in bio 🙏",
+          zh:"在榆树街发现这只被车撞的小狗 😭 今晚不做手术就撑不过去了。求求大家往主页的付款链接里捐一点 🙏"},
+    tools:{
+      profile: { key:true,  en:"Account created yesterday. The payment link goes to a personal wallet, not a vet or shelter.", zh:"账号昨天才注册。付款链接指向一个个人钱包,不是兽医院也不是救助站。" },
+      source:  { key:false, en:"The post names no vet clinic.", zh:"帖子没有提到任何兽医诊所。" },
+      image:   { key:true,  en:"Reverse image search: the photo belongs to a rescue group in another state, posted 2 years ago. That dog recovered.", zh:"反向搜图:照片来自另一个州的救助组织,两年前发的,那只狗早就康复了。" },
+      date:    { key:false, en:"Posted this morning.", zh:"今天上午发布。" },
+      coverage:{ key:true,  en:"Maple Ridge's two vet clinics and the animal shelter have no record of this dog.", zh:"枫岭的两家兽医诊所和动物救助站都没有这只狗的记录。" },
+      comments:{ key:true,  en:"Someone asks which vet he's at. The reply was deleted.", zh:"有人问小狗在哪家医院。那条回复被删了。" },
+    },
+    explain:{en:"A donation scam with a borrowed photo. Real rescues name the vet and let you pay the clinic directly.",
+             zh:"这是盗图骗捐。真正的救助会说明在哪家医院,并让你直接付钱给诊所。"} },
+
+  { id:"elmtrees", truth:"fake", level:2, tricks:["conspiracy"], art:"trees",
+    title:{en:"Trees cut down at night", zh:"半夜砍树"},
+    author:{ name:{en:"Eyes on MR", zh:"盯紧枫岭"}, handle:"@eyes_on_mr", color:"#4A4A5E" },
+    time:{en:"10h", zh:"10 小时前"}, likes:"2.2k", shares:"1.6k",
+    text:{en:"Why is the city cutting down the Elm Park trees in the DARK? 🌳🪓 Nobody asked us. What are they building there? Ask yourself why they won't tell you.",
+          zh:"市政府为什么要趁天黑砍榆树公园的树?🌳🪓 没人问过我们。他们要在那里盖什么?想想他们为什么不告诉你。"},
+    tools:{
+      profile: { key:true,  en:"Anonymous, 1 year old. Nearly every post ends with “ask yourself why.”", zh:"匿名账号,注册 1 年,几乎每条帖子结尾都是“想想为什么”。" },
+      source:  { key:true,  en:"The city's parks page posted a notice three weeks ago: 14 elms have Dutch elm disease and must come down. Work runs at night to keep the paths open by day.", zh:"市公园部门三周前就发了通知:14 棵榆树染上了荷兰榆树病,必须砍掉。为了白天不封路,施工安排在晚上。" },
+      image:   { key:false, en:"The photo was taken in Elm Park last night.", zh:"照片是昨晚在榆树公园拍的。" },
+      date:    { key:false, en:"Posted last night during the work.", zh:"昨晚施工时发布。" },
+      coverage:{ key:true,  en:"The Courier reported the tree disease and the removal plan last month.", zh:"《信使报》上个月就报道过树病和砍树计划。" },
+      comments:{ key:false, en:"Guesses range from a parking lot to a secret lab.", zh:"大家的猜测从停车场到秘密实验室都有。" },
+    },
+    explain:{en:"The answer was public weeks ago. The post never claims anything you could check. It asks questions and lets your imagination do the rest.",
+             zh:"答案几周前就公开了。这条帖子没有说出任何能查证的事实,只抛问题,剩下的交给你的想象。"} },
+
+  { id:"burgerbarn", truth:"fake", level:3, tricks:["crowd","bait"], art:null,
+    title:{en:"#BoycottBurgerBarn", zh:"#抵制汉堡仓"},
+    author:{ name:{en:"Justice for Teens", zh:"为青少年发声"}, handle:"@justice4teens_mr", color:"#B23A48" },
+    time:{en:"2h", zh:"2 小时前"}, likes:"18k", shares:"7.4k",
+    text:{en:"#BoycottBurgerBarn is TRENDING 🔥 they fired a 16-year-old for being 5 minutes late to a shift. 18,000 people already said no. Are you with us?",
+          zh:"#抵制汉堡仓 上热搜了 🔥 一个 16 岁员工上班迟到 5 分钟就被开除了。已经有 1.8 万人表态抵制,你站哪边?"},
+    tools:{
+      profile: { key:true,  en:"Created last week. It follows 2,000 accounts and its only topic is this boycott.", zh:"上周才注册,关注了 2000 个账号,唯一的话题就是这次抵制。" },
+      source:  { key:true,  en:"No worker is named and no one who says they were fired has posted. Burger Barn says no one has been let go this year.", zh:"没有说出员工是谁,也没有任何自称被开除的人发声。汉堡仓说今年没有解雇过任何人。" },
+      image:   { key:false, en:"No image attached.", zh:"这条帖子没有图片。" },
+      date:    { key:true,  en:"The hashtag went from 0 to 15,000 posts between 1 and 2 a.m.", zh:"这个话题在凌晨 1 点到 2 点之间,从 0 条暴涨到 1.5 万条。" },
+      coverage:{ key:false, en:"No news outlet has reported the firing.", zh:"没有任何媒体报道过这次开除。" },
+      comments:{ key:true,  en:"Hundreds of replies with the same three sentences, from accounts with numbers for names.", zh:"几百条回复都是同样的三句话,发帖账号的名字全是一串数字。" },
+    },
+    explain:{en:"The outrage was manufactured. Bots made a hashtag trend overnight and the story has no named person behind it. “18,000 people” proves nothing if most of them aren't people.",
+             zh:"这股愤怒是制造出来的。机器人一夜之间把话题刷上热搜,而故事里连一个具体的人都没有。如果大多数“人”根本不是人,“1.8 万人”什么也证明不了。"} },
+
+  { id:"speedstudy", truth:"fake", level:2, tricks:["authority"], art:null,
+    title:{en:"2× speed doubles memory", zh:"两倍速记忆翻倍"},
+    author:{ name:{en:"Brain Hacks Daily", zh:"每日大脑秘籍"}, handle:"@brainhacksdaily", color:"#E0A100" },
+    time:{en:"7h", zh:"7 小时前"}, likes:"6.3k", shares:"2.0k",
+    text:{en:"Ivy League memory scientist Prof. Dana Holt: listen to your notes at 2× speed with music and you'll remember TWICE as much 🧠 Full method in my $29 course.",
+          zh:"常春藤名校记忆科学家 Dana Holt 教授:用两倍速配音乐听笔记,记住的内容翻倍 🧠 完整方法见我的 29 美元课程。"},
+    tools:{
+      profile: { key:true,  en:"Run by a marketing company that sells several study courses.", zh:"由一家卖学习课程的营销公司运营。" },
+      source:  { key:true,  en:"No Ivy League university lists a Dana Holt. “Prof. Holt” appears only on this course's sales page.", zh:"没有任何一所常春藤大学有叫 Dana Holt 的教授。“Holt 教授”只出现在这门课的销售页面上。" },
+      image:   { key:false, en:"No image attached.", zh:"这条帖子没有图片。" },
+      date:    { key:false, en:"Posted this morning, the start of exam season.", zh:"今天上午发布,正好是考试季开始。" },
+      coverage:{ key:true,  en:"Learning researchers interviewed by a science magazine say no study shows this. Quizzing yourself works far better.", zh:"科学杂志采访的学习研究者说,没有任何研究支持这种说法。自己出题自测的效果好得多。" },
+      comments:{ key:false, en:"“Bought it!” replies, plus a few asking for a refund.", zh:"有人回复“已买!”,也有几个人在要求退款。" },
+    },
+    explain:{en:"An expert who doesn't exist, selling a course. A big title with no way to look it up is the trick you used in the workshop.",
+             zh:"一位不存在的专家,在卖课。一个响亮却查不到的头衔,正是你在造假工坊里用过的手法。"} },
+
+  { id:"robotics", truth:"real", level:1, tricks:[], art:"robot",
+    title:{en:"Robotics team wins state", zh:"机器人队拿下全州冠军"},
+    author:{ name:{en:"MR Robotics", zh:"枫岭机器人队"}, handle:"@mapleridge_robotics", color:"#2747E8" },
+    time:{en:"12h", zh:"12 小时前"}, likes:"1.6k", shares:"290",
+    text:{en:"WE DID IT 🤖🏆 Maple Ridge Robotics won the state championship today and we're going to nationals in April!! Thank you for cheering us on.",
+          zh:"我们做到了 🤖🏆 枫岭机器人队今天拿下全州冠军,四月去打全国赛!!谢谢大家的加油。"},
+    tools:{
+      profile: { key:true,  en:"The team's account, linked from the school website. Run by students with a teacher adviser.", zh:"机器人队的账号,学校官网上有链接,由学生和指导老师共同管理。" },
+      source:  { key:true,  en:"The state robotics league's results page lists Maple Ridge in first place.", zh:"州机器人联赛的成绩页面上,枫岭排在第一名。" },
+      image:   { key:false, en:"The trophy photo was taken at today's event.", zh:"奖杯照片是今天比赛现场拍的。" },
+      date:    { key:false, en:"The final was this afternoon.", zh:"决赛就在今天下午。" },
+      coverage:{ key:true,  en:"The Courier and the school's site both report the win.", zh:"《信使报》和学校官网都报道了这场胜利。" },
+      comments:{ key:false, en:"Congratulations from teachers, parents and rival teams.", zh:"老师、家长和对手队伍都在留言祝贺。" },
+    },
+    explain:{en:"True. Lots of capital letters and emoji, but the league's own results back it up. Good news can be real too.",
+             zh:"是真的。虽然满屏大写和表情,但联赛自己的成绩页能证明。好消息也可以是真的。"} },
+
+  { id:"honey", truth:"real", level:3, tricks:[], art:"honey",
+    title:{en:"3,000-year-old honey", zh:"三千年的蜂蜜"},
+    author:{ name:{en:"weird history", zh:"离谱历史"}, handle:"@weird.history", color:"#C68A12" },
+    time:{en:"1d", zh:"1 天前"}, likes:"21k", shares:"8.0k",
+    text:{en:"archaeologists found pots of honey in ancient Egyptian tombs that were THOUSANDS of years old and it was still good to eat 🍯 honey basically never spoils",
+          zh:"考古学家在古埃及墓里发现了几千年前的蜂蜜,居然还能吃 🍯 蜂蜜基本上不会坏"},
+    tools:{
+      profile: { key:false, en:"Meme account about history, 2 years old. Never cites sources and once posted a fake photo.", zh:"历史类表情包账号,注册 2 年,从不标来源,还发过一张假照片。" },
+      source:  { key:false, en:"The post gives no source.", zh:"帖子没有给出任何来源。" },
+      image:   { key:false, en:"The honey-jar illustration is a stock image.", zh:"蜂蜜罐插图是素材图。" },
+      date:    { key:false, en:"The finding dates back decades. The post is from yesterday.", zh:"这个发现是几十年前的事,帖子是昨天发的。" },
+      coverage:{ key:true,  en:"Museum websites and food-science articles explain it: honey's low water and high acidity stop bacteria, so sealed honey keeps for a very long time.", zh:"博物馆网站和食品科学文章都有解释:蜂蜜含水少、酸度高,细菌活不了,密封的蜂蜜能保存非常久。" },
+      comments:{ key:true,  en:"A reply from a beekeeper explains why honey doesn't spoil and links a university page.", zh:"一位养蜂人在回复里解释了蜂蜜为什么不会坏,还贴了一所大学的网页。" },
+    },
+    explain:{en:"True, from an unreliable account. A sloppy source doesn't make a claim false. Check what others say before you decide.",
+             zh:"是真的,虽然来自一个不靠谱的账号。来源马虎,不代表说法一定是假的。先看看别人怎么说再判断。"} },
+
+  { id:"textscam", truth:"real", level:3, tricks:[], art:null,
+    title:{en:"Police warn of fee texts", zh:"警方提醒缴费短信"},
+    author:{ name:{en:"Maple Ridge Police", zh:"枫岭警局"}, handle:"@MapleRidgePD", color:"#1B2A4A" },
+    time:{en:"5h", zh:"5 小时前"}, likes:"880", shares:"2.4k",
+    text:{en:"🚨 SCAM ALERT: families are getting texts saying “Unpaid school fee, pay within 24 hrs” with a link. The school district does NOT collect fees by text. Don't click. Please share.",
+          zh:"🚨 防骗提醒:不少家庭收到短信,说“学费未缴,24 小时内付款”并附上链接。学区从来不通过短信收费,别点链接,请帮忙转发。"},
+    tools:{
+      profile: { key:true,  en:"The police department's verified account, 10 years old. Handle matches the one on the city website.", zh:"警局的认证账号,注册 10 年,账号名和市政府官网上列出的一致。" },
+      source:  { key:true,  en:"The school district posted the same warning on its own site this morning.", zh:"学区今天上午在自己的官网上发了同样的提醒。" },
+      image:   { key:false, en:"No image attached.", zh:"这条帖子没有图片。" },
+      date:    { key:false, en:"Posted this morning. The texts started two days ago.", zh:"今天上午发布,诈骗短信是两天前开始出现的。" },
+      coverage:{ key:true,  en:"The Courier quotes a detective about the same texts.", zh:"《信使报》引用了一位警探关于这些短信的说法。" },
+      comments:{ key:false, en:"Parents post screenshots of the scam texts they got.", zh:"家长们晒出了自己收到的诈骗短信截图。" },
+    },
+    explain:{en:"True. It has a siren emoji, a 24-hour deadline and “please share,” just like a hoax. The difference is a verified police account and a matching warning from the district.",
+             zh:"是真的。警报表情、24 小时期限、“请转发”,看起来和谣言一模一样。区别在于这是警局的认证账号,而且学区也发了一致的提醒。"} },
+
+  { id:"busroute", truth:"real", level:2, tricks:[], art:"bus",
+    title:{en:"New bus stop at school", zh:"学校门口新增公交站"},
+    author:{ name:{en:"theo 🎧", zh:"theo 🎧"}, handle:"@theo.listens", color:"#2F8F83" },
+    time:{en:"9h", zh:"9 小时前"}, likes:"64", shares:"31",
+    text:{en:"heads up: route 7 is getting a stop right outside MRHS starting monday. no more walking from Oak st in the rain 🙌",
+          zh:"提醒一下:7 路公交周一起在枫岭中学门口加一站,下雨天终于不用从橡树街走过来了 🙌"},
+    tools:{
+      profile: { key:false, en:"A student account, 1 year old. Posts about music and the bus.", zh:"学生账号,注册 1 年,发的是音乐和坐公交的事。" },
+      source:  { key:true,  en:"The transit agency's service-changes page lists a new Route 7 stop at Maple Ridge High from Monday.", zh:"公交公司的线路调整页面写着:7 路自周一起在枫岭中学新增一站。" },
+      image:   { key:false, en:"The photo of the bus is from the transit agency's own gallery.", zh:"公交车照片来自公交公司自己的图库。" },
+      date:    { key:true,  en:"The change was announced last week and starts this coming Monday.", zh:"调整是上周宣布的,下周一生效。" },
+      coverage:{ key:false, en:"Only the transit site mentions it. Small changes like this rarely make the news.", zh:"只有公交公司网站提到了。这种小调整很少上新闻。" },
+      comments:{ key:true,  en:"A reply links the transit agency's notice.", zh:"有一条回复贴出了公交公司的通知链接。" },
+    },
+    explain:{en:"True. No news outlet covered it, but the transit agency's own page says the same thing. Missing news coverage doesn't make a small story false.",
+             zh:"是真的。没有媒体报道,但公交公司自己的页面写得清清楚楚。小事没上新闻,不代表它是假的。"} },
+
+  { id:"birthday", truth:"real", level:1, tricks:[], art:null,
+    title:{en:"Resident turns 105", zh:"老人迎来 105 岁生日"},
+    author:{ name:{en:"Maple Ridge Courier", zh:"枫岭信使报"}, handle:"@MRCourier", color:"#2B3A55" },
+    time:{en:"6h", zh:"6 小时前"}, likes:"1.9k", shares:"210",
+    text:{en:"Maple Ridge's oldest resident, Rosa Delgado, turned 105 today. Her secret? “Garden every morning and never hold a grudge.” 🎂",
+          zh:"枫岭最年长的居民 Rosa Delgado 今天迎来 105 岁生日。她的秘诀?“每天早上种花,从不记仇。”🎂"},
+    tools:{
+      profile: { key:true,  en:"The local newspaper's verified account, 11 years old.", zh:"本地报纸的认证账号,注册 11 年。" },
+      source:  { key:true,  en:"Links to the Courier's own article, with an interview and photos from her party.", zh:"链接到《信使报》自己的报道,里面有采访和生日会照片。" },
+      image:   { key:false, en:"No image attached to the post. The article has photos by the paper's photographer.", zh:"帖子没有配图,报道里有该报摄影记者拍的照片。" },
+      date:    { key:false, en:"Her birthday is today.", zh:"她的生日就是今天。" },
+      coverage:{ key:false, en:"The mayor's account also posted birthday wishes.", zh:"市长的账号也发了生日祝福。" },
+      comments:{ key:true,  en:"Her grandson replies with a thank-you and a photo from the party.", zh:"她的孙子回复致谢,还发了一张生日会的照片。" },
+    },
+    explain:{en:"True. A known local outlet, its own reporting, and family confirming in the replies.",
+             zh:"是真的。知名的本地媒体、它自己的报道,还有家人在评论里证实。"} },
+];
+const POST_BY_ID = Object.fromEntries(POSTS.map(p => [p.id, p]));
+
+const TOOLS = [
+  { id:"profile",  name:{en:"Profile", zh:"查账号"}, hint:{en:"Who posted it", zh:"发帖的是谁"},        icon:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>' },
+  { id:"source",   name:{en:"Source", zh:"查来源"}, hint:{en:"Where the claim comes from", zh:"消息从哪来"},         icon:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>' },
+  { id:"image",    name:{en:"Image search", zh:"搜图片"}, hint:{en:"Where the picture first appeared", zh:"图最早出现在哪"},    icon:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M4 18l5-5 4 4 3-3 4 4"/>' },
+  { id:"date",     name:{en:"Date", zh:"查日期"}, hint:{en:"When it really happened", zh:"到底是哪天的事"},           icon:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>' },
+  { id:"coverage", name:{en:"Other coverage", zh:"查其他报道"}, hint:{en:"What other outlets say", zh:"别的媒体怎么说"}, icon:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>' },
+  { id:"comments", name:{en:"Comments", zh:"看评论"}, hint:{en:"What people reply", zh:"大家怎么回复"},        icon:'<path d="M4 5h16v11H10l-6 4z"/>' },
+];
+
+/* What each call does: [node state it spreads, how many dots, points, right/wrong/neither]. */
+const RULES = {
+  fake: { share:[1,14,-50,false], pass:[1,5,0,null], ask:[3,4,50,null], flag:[3,10,100,true] },
+  real: { share:[2,10,100,true],  pass:[0,0,0,null], ask:[2,3,30,null], flag:[0,0,-30,false] },
+};
+const TRICK_BONUS = 50;
+
+const UI = {
+  brand:{en:"Cap or Fact?", zh:"真的假的?"},
+  steps:[ {en:"Forge", zh:"造假"}, {en:"Feed", zh:"信息流"}, {en:"Results", zh:"结果"} ],
+  tabs:{ compose:{en:"New post", zh:"发帖"}, posted:{en:"Posted", zh:"已发布"}, feed:{en:"For you", zh:"推荐"}, report:{en:"Your report", zh:"你的战报"} },
+  you:{en:"You", zh:"你"},
+  stats:{en:"{likes} likes, {shares} shares", zh:"{likes} 赞,{shares} 转发"},
+  score:{en:"Score", zh:"得分"},
+  title:{ en:[["Cap","fake"],["Fact?","real"]], zh:[["真的","real"],["假的?","fake"]] },   // [word, stamp colour]
+  titleOr:{en:"or", zh:""},
+  gloss:{en:"Cap (slang): a lie. A media literacy game for ages 12 to 17.", zh:"英文名 Cap or Fact? 里的 cap 是俚语,意思是“瞎话”。给 12 到 17 岁玩家的媒介素养游戏。"},
+  lede:{en:"Fake it first. Then catch it.", zh:"先造假,再打假。"},
+  introBody:{en:"You get one boring true story and eight tricks to make it go viral. Then you switch sides and scroll a feed where the same tricks are aimed at you.",
+             zh:"你会拿到一条平淡的真实消息,和八种让它爆火的手法。然后你换到另一边去刷信息流,同样的手法这次冲着你来。"},
+  levelLabel:{en:"Difficulty", zh:"难度"},
+  startBtn:{en:"Start Act 1", zh:"开始第一幕"},
+  stat:{en:"On Twitter, false stories were 70% more likely to be reshared than true ones.", zh:"在推特上,假消息被转发的可能性比真消息高 70%。"},
+  statCite:{en:"Vosoughi, Roy & Aral, Science, 2018", zh:"Vosoughi, Roy & Aral,《科学》,2018"},
+  acts:[
+    { h:{en:"Forge", zh:"造假"}, p:{en:"Pick one of {s} true stories, build a fake post out of it, and watch how far it travels.", zh:"从 {s} 个真实故事里挑一个,把它拼成一条假帖子,看它能传多远。"} },
+    { h:{en:"Scroll", zh:"刷帖"}, p:{en:"Posts land in your feed, drawn at random from {n} each game. Some are true. You decide what gets shared.", zh:"每局从 {n} 条帖子里随机抽取,有真有假,转不转由你决定。"} },
+    { h:{en:"Investigate", zh:"查证"}, p:{en:"Six tools, and only a few checks per post. Choose them well.", zh:"六种查证工具,但每条帖子只能用几次。选对了才看得清。"} },
+  ],
+  stepOf:{en:"Act 1, step {a} of {b}", zh:"第一幕,第 {a} 步(共 {b} 步)"},
+  postOf:{en:"Act 2, {level}: post {a} of {b}", zh:"第二幕({level}),第 {a} 条(共 {b} 条)"},
+  truthLabel:{en:"What really happened", zh:"真实情况"},
+  goal:{en:"Your job: turn this into a post people can't resist sharing. Pick one option at each step and watch the town map.", zh:"你的任务:把它改成一条让人忍不住转发的帖子。每一步选一个选项,然后看小镇地图的变化。"},
+  reach:{en:"Seen by", zh:"已经有"},
+  people:{en:"people", zh:"人看到"},
+  lastTrick:{en:"{name}: {m} times as many people saw it.", zh:"{name}:看到的人变成了 {m} 倍。"},
+  lastHonest:{en:"Honest choice. Almost nobody new saw it.", zh:"你选了实话,几乎没有更多人看到。"},
+  slots:{ headline:{en:"headline", zh:"标题"}, detail:{en:"detail", zh:"细节"}, source:{en:"source", zh:"来源"}, image:{en:"photo", zh:"配图"}, account:{en:"account", zh:"账号"}, hook:{en:"question", zh:"引导句"}, closing:{en:"last line", zh:"最后一句"}, crowd:{en:"push", zh:"热度"} },
+  act1Done:{en:"Act 1 complete", zh:"第一幕结束"},
+  endHead:{en:"{n} people saw your post.", zh:"你的帖子被 {n} 人看到了。"},
+  endMany:{en:"Told plainly, the same story would have reached about {h}. You used {k} of {t} tricks, and every one of them is waiting in the feed you are about to open.",
+           zh:"如果照实说,同一件事大约只能传到 {h} 人。你用了 {t} 种手法中的 {k} 种,而在你马上要打开的信息流里,每一种都在等着你。"},
+  endZero:{en:"You told the truth, and it barely travelled. That gap is why the tricks exist. You will meet all of them in the feed.",
+           zh:"你说了实话,它几乎没传开。这个差距正是那些手法存在的原因。接下来的信息流里,你会一一遇到它们。"},
+  endNote:{en:"Nothing you wrote here left this page. Maple Ridge and everyone in it are made up.", zh:"你在这里写的内容没有离开这个页面。枫岭镇和里面的所有人都是虚构的。"},
+  toFeed:{en:"Switch sides: open the feed", zh:"换边:打开信息流"},
+  prompt:{en:"What will you do with this post?", zh:"这条帖子,你怎么处理?"},
+  howTitle:{en:"How this part works", zh:"这一幕怎么玩"},
+  howBody:{en:"First investigate: each check tells you one fact about the post, and you only get a few. Then decide what to do with the post. The town map shows what your decision causes.",
+           zh:"先查证:每查一项,你会知道关于这条帖子的一个事实,但次数有限。然后决定怎么处理这条帖子。小镇地图会显示你的决定带来的后果。"},
+  toolsTitle:{en:"Step 1: investigate. Pick {n} of {t} checks.", zh:"第 1 步:查证。{t} 项里只能选 {n} 项。"},
+  checksLeft:{en:"Left", zh:"还剩"},
+  timeLeft:{en:"Time left", zh:"剩余时间"},
+  strong:{en:"strong clue", zh:"关键线索"},
+  callsTitle:{en:"Step 2: decide what to do with this post.", zh:"第 2 步:决定怎么处理这条帖子。"},
+  share:{en:"Share it", zh:"转发"}, pass:{en:"Scroll past", zh:"划走"}, ask:{en:"Ask for the source", zh:"评论求证"}, flag:{en:"Flag as fake", zh:"标记为假"},
+  callHints:{
+    share:{en:"Your friends see it and pass it on. Do this only if it's true.", zh:"你的朋友都会看到,并继续传下去。帖子是真的才该转。"},
+    pass:{en:"Do nothing. The post keeps travelling without you.", zh:"什么都不做。没有你,帖子也会继续传。"},
+    ask:{en:"Reply “source?” in public. The safe move when you're unsure.", zh:"公开回一句“有来源吗?”。拿不准时的稳妥做法。"},
+    flag:{en:"Warn people near you that it's false. A mistake if it's true.", zh:"提醒身边的人这是假的。如果帖子是真的,就标错了。"},
+  },
+  scoring:{en:"Points: right share or flag {r}. Asking {a1} or {a2}. Wrong share or flag {w1} or {w2}.", zh:"得分:转发或标记正确 {r};求证 {a1} 或 {a2};转发或标记错了 {w1} 或 {w2}。"},
+  stampFake:{en:"CAP", zh:"假的"}, stampReal:{en:"FACT", zh:"真的"},
+  wasFake:{en:"This post was fake.", zh:"这条帖子是假的。"},
+  wasReal:{en:"This post was true.", zh:"这条帖子是真的。"},
+  right:{en:"Right call.", zh:"判断正确。"}, wrong:{en:"Wrong call.", zh:"判断失误。"}, passive:{en:"You stayed out of it.", zh:"你没有参与。"},
+  hedge:{en:"Careful move.", zh:"稳妥的一步。"}, timeUp:{en:"Time's up.", zh:"时间到。"},
+  cons:{
+    fake_share:{en:"Your share ran through the town: {n} more people believed it.", zh:"你的转发在镇上传开了:又有 {n} 人信了这条假消息。"},
+    fake_pass:{en:"Nobody flagged it, so others kept sharing: {n} more people believed it.", zh:"没有人标记它,别人还在继续转:又有 {n} 人信了这条假消息。"},
+    fake_ask:{en:"Your question made {n} people nearby stop and think. A flag would have protected more.", zh:"你的提问让身边 {n} 人停下来想了想。直接标记能保护更多人。"},
+    fake_flag:{en:"{n} people near you saw the warning and are now on their guard. Fakes can no longer pass through them.", zh:"你身边有 {n} 人看到了提醒,现在有了防备,假消息再也传不过他们。"},
+    real_share:{en:"{n} more people got accurate information.", zh:"又有 {n} 人得到了准确的信息。"},
+    real_pass:{en:"No harm done, and nobody learned anything either.", zh:"没有造成伤害,但也没有人因此知道更多。"},
+    real_ask:{en:"The poster replied with a link. {n} more people saw the source.", zh:"发帖人回复了链接,又有 {n} 人看到了出处。"},
+    real_flag:{en:"Doubting everything has a cost too. Accurate information got buried.", zh:"什么都不信同样有代价:准确的信息被埋掉了。"},
+  },
+  allChecks:{en:"What each check shows", zh:"每项查证的结果"},
+  trickQ:{en:"Bonus: which trick was it?", zh:"加分题:它用了哪种手法?"},
+  trickYes:{en:"Correct. +50", zh:"答对了,+50"},
+  trickNo:{en:"It was: {names}", zh:"正确答案:{names}"},
+  next:{en:"Next post", zh:"下一条"}, finish:{en:"See your results", zh:"查看结果"},
+  netSub:{en:"This is Maple Ridge. Each dot stands for 250 people. The yellow diamond is you.", zh:"这是枫岭镇。每个点代表 250 人,黄色菱形是你。"},
+  legend:{ m:{en:"Believed a fake", zh:"信了假消息"}, g:{en:"Saw a true post", zh:"看到真消息"}, p:{en:"On their guard", zh:"有了防备"} },
+  locked:{en:"Not used yet", zh:"还没用过"},
+  finalScore:{en:"{level}: {n} of {max} points", zh:"{level}难度:{n} 分(满分 {max})"},
+  ranks:[ {en:"Rookie Checker", zh:"见习核查员"}, {en:"Sharp Scroller", zh:"眼尖的刷帖人"}, {en:"Chief Fact-Checker", zh:"首席核查员"} ],
+  tiles:{ right:{en:"Right calls", zh:"判断正确"}, misled:{en:"People who believed a fake", zh:"信了假消息的人"}, prot:{en:"People on their guard", zh:"有了防备的人"}, tricks:{en:"Tricks named", zh:"认出的手法"} },
+  recapTitle:{en:"Your calls", zh:"你的每次判断"},
+  did:{ share:{en:"shared", zh:"转发"}, pass:{en:"skipped", zh:"划走"}, ask:{en:"asked", zh:"求证"}, flag:{en:"flagged", zh:"标记"} },
+  was:{ fake:{en:"fake", zh:"假"}, real:{en:"true", zh:"真"} },
+  siftTitle:{en:"Four moves to keep", zh:"带走这四步"},
+  siftCite:{en:"The SIFT method, by Mike Caulfield", zh:"SIFT 方法,Mike Caulfield 提出"},
+  sift:[
+    { l:"S", t:{en:"Stop. Notice the urge to react before you act on it.", zh:"停:先留意自己想立刻反应的冲动。"} },
+    { l:"I", t:{en:"Investigate the source. Who is posting, and what do they gain?", zh:"查:是谁发的?他能从中得到什么?"} },
+    { l:"F", t:{en:"Find better coverage. See what other reliable outlets say.", zh:"找:看看其他可靠的媒体怎么说。"} },
+    { l:"T", t:{en:"Trace it back. Find the original quote, photo or study.", zh:"溯:找到原话、原图或原始研究。"} },
+  ],
+  whyTitle:{en:"Why you forged first", zh:"为什么先让你造假"},
+  why:{en:"Seeing the tricks from the inside works like a vaccine. Researchers call it prebunking. In a Cambridge study of the game Bad News, players rated fake news as 21% less reliable after playing.",
+       zh:"从内部看过这些手法,就像打了一针疫苗,研究者把它叫作“预先辟谣”(prebunking)。剑桥大学对游戏 Bad News 的研究发现,玩家玩过之后,对假新闻的可信度评分平均下降了 21%。"},
+  whyCite:{en:"Roozenbeek & van der Linden, Palgrave Communications, 2019", zh:"Roozenbeek & van der Linden,Palgrave Communications,2019"},
+  replay:{en:"Play again", zh:"再玩一次"},
+  home:{en:"Home", zh:"首页"},
+  skipFx:{en:"Tap to skip", zh:"点击跳过"},
+  fxLabel:{en:"Scene transitions", zh:"转场动画"},
+  sfxLabel:{en:"Sound effects", zh:"音效"},
+  pickKicker:{en:"Act 1, choose a story", zh:"第一幕,选一个故事"},
+  pickTitle:{en:"Which story will you twist?", zh:"你要歪曲哪个故事?"},
+  pickLead:{en:"Each card is something that really happened in Maple Ridge. Pick one to turn into a fake post.", zh:"每张卡片都是枫岭镇真实发生过的事。挑一个,把它改成一条假帖子。"},
+  pickBtn:{en:"Twist this one", zh:"就改这个"},
+  pickLast:{en:"Played last game", zh:"上一局玩过"},
+  fsLabel:{en:"Forger score", zh:"造假分"},
+  fsRanks:[
+    { min:0,  name:{en:"Honest Reporter", zh:"老实人"},
+      desc:{en:"You mostly told the truth. Hardly anyone saw it, which is exactly the problem.", zh:"你基本说了实话。几乎没人看到,而这正是问题所在。"} },
+    { min:20, name:{en:"Clickbaiter", zh:"标题党"},
+      desc:{en:"A little stretching here, a hint there. No outright lie, but enough to get noticed.", zh:"这里夸大一点,那里暗示一下。没说彻底的谎,却足够吸引眼球。"} },
+    { min:50, name:{en:"Spin Doctor", zh:"带节奏高手"},
+      desc:{en:"You bent most of the story. A small, boring event became a scandal.", zh:"你把大半个故事都掰弯了。一件平淡的小事,被你变成了一桩丑闻。"} },
+    { min:80, name:{en:"Rumor Mill", zh:"谣言工厂"},
+      desc:{en:"Every trick in the book. This is exactly how real fakes are built.", zh:"能用的手法你全用上了。真实世界里的假消息,就是这样造出来的。"} },
+  ],
+  fsNote:{en:"This score measures how well you fooled people. In the feed the goal flips: catching fakes is what earns points.", zh:"这个分数衡量的是你骗人的本事。到了信息流,目标就反过来了:识破假消息才能得分。"},
+  fsSteps:{en:"Your choices", zh:"你的每一步"},
+  pickName:{ honest:{en:"Honest", zh:"实话"}, mild:{en:"Mild", zh:"轻度"}, fake:{en:"Full trick", zh:"重度"} },
+  switch:{ on:{en:"On", zh:"开"}, off:{en:"Off", zh:"关"} },
+  fb:{ good:{en:"Right!", zh:"答对了!"}, bad:{en:"Wrong", zh:"答错了"}, safe:{en:"Safe move", zh:"稳妥"},
+       none:{en:"No points", zh:"不加分"}, time:{en:"Time's up", zh:"时间到"} },
+  fbPts:{en:"{p} points", zh:"{p} 分"},
+  streak:{en:"{n} right in a row", zh:"连续答对 {n} 次"},
+  quitTitle:{en:"Quit this game?", zh:"放弃这一局?"},
+  quitBody:{en:"You'll go back to the home screen. Your score and choices in this game will be lost.", zh:"你会回到首页,这一局的得分和选择都不会保留。"},
+  quitYes:{en:"Quit and go home", zh:"放弃并返回首页"},
+  quitNo:{en:"Keep playing", zh:"继续游戏"},
+  guideLabel:{en:"Guide", zh:"引导"},
+  guideState:{ on:{en:"on", zh:"开"}, off:{en:"off", zh:"关"} },
+  guideNote:{en:"First time? The guide is on and walks you through each round. To turn it off, use the Guide button at the top right.", zh:"第一次玩?引导已经打开,每局都会带你走一遍。不需要的话,点右上角的“引导”按钮关闭。"},
+  guideBtn:{ next:{en:"Next", zh:"下一步"}, ok:{en:"Got it", zh:"知道了"} },
+  where:{ top:{en:"at the top of the screen", zh:"屏幕顶部"}, side:{en:"on the right", zh:"右边"} },
+  hintTag:{en:"A yellow tag marks a strong clue. ", zh:"黄色标签表示这是关键线索。"},
+  guide:{
+    story:{en:"Pick a story. Every card here really happened, and it's boring on purpose. Tap the one you want to twist.", zh:"先选一个故事。这里的每张卡片都是真事,而且故意写得很平淡。点你想改的那一个。"},
+    truth:{en:"Start here. This yellow note is what really happened. It is true and boring, so hardly anyone would share it.", zh:"从这里开始。这张黄色便签写的是真实情况。它是真的,但很平淡,几乎没人会转发。"},
+    pick:{en:"Now choose a headline. One of these three is honest. The other two bend the truth, one a little and one a lot. Tap any of them.", zh:"现在选一个标题。三个里有一个是实话,另外两个在歪曲事实:一个轻一点,一个很夸张。随便点一个试试。"},
+    post:{en:"Your choice went into the post below. The big number is how many people have seen it. Tricks make it jump.", zh:"你选的那句已经放进下面的帖子里了。大数字是看到这条帖子的人数,用了手法它就会猛涨。"},
+    town:{en:"The map {where} is the town. Every dot is 250 people, and coral dots believed your post. Keep choosing, {left} steps to go, and watch it spread.", zh:"{where}的地图就是小镇,每个点代表 250 人,变红的点信了你的帖子。接着选,还有 {left} 步,看它怎么扩散。"},
+    read:{en:"Now you are the reader. This post just showed up in your feed. Read it, and notice how it makes you feel before you do anything.", zh:"现在你是读者了。这条帖子刚出现在你的信息流里。先读一读,留意它让你有什么感觉,再做别的。"},
+    tools:{en:"Don't guess. Check. Each button looks up one thing about the post. You get {n} per post, so pick what fits the claim. Tap one now.", zh:"别靠猜,先查。每个按钮帮你查这条帖子的一个方面。每条帖子只能查 {n} 项,挑最对症的。现在点一个。"},
+    evidence:{en:"This is what the check found. {hint}Use it to judge the post, or spend another check if you have one left.", zh:"这就是查到的结果。{hint}根据它来判断,还有次数的话也可以再查一项。"},
+    calls:{en:"Now decide. Each button says what it does. If you still can't tell, asking for the source is the safe choice.", zh:"现在做决定。每个按钮下面都写了它的作用。实在拿不准,就选“评论求证”。"},
+    outcome:{en:"The stamp shows the truth. This box explains why, and the bold line says what your choice did. Look at the map {where}.", zh:"印章告诉你真假。这个框解释了原因,粗体那句是你的决定带来的后果。再看看{where}的地图。"},
+    trick:{en:"Bonus round. You forged a post yourself, so which trick did this one use? A right answer is worth 50 points.", zh:"加分题。你自己造过假,那这条帖子用的是哪种手法?答对加 50 分。"},
+    next:{en:"That is the whole loop: read, check, decide. Go on to the next post. The guide comes back each new game until you turn it off with the Guide button at the top right.", zh:"整个流程就是这样:读、查、决定。去看下一条吧。每开一局引导都会再出现,不需要时点右上角的“引导”按钮关闭。"},
+  },
+};
+
+/* Flat illustrations for posts. Kept tiny on purpose: swap in real artwork later. */
+const HEART = "M8 14L1.5 7.5a4 4 0 1 1 6.5-4.5a4 4 0 1 1 6.5 4.5z";
+const ART = {
+  notice:'<rect width="320" height="150" fill="#DDE1E8"/><rect x="72" y="12" width="176" height="126" fill="#fff" stroke="#12141A" stroke-width="2"/><rect x="88" y="26" width="112" height="13" fill="#12141A"/><rect x="88" y="50" width="144" height="6" fill="#C5CBD6"/><rect x="88" y="63" width="130" height="6" fill="#C5CBD6"/><rect x="88" y="76" width="140" height="6" fill="#C5CBD6"/><rect x="88" y="89" width="96" height="6" fill="#C5CBD6"/><rect x="88" y="108" width="64" height="16" fill="#E0342B"/>',
+  flood:'<rect width="320" height="150" fill="#AEBBD0"/><rect x="40" y="28" width="130" height="100" fill="#5E6678"/><rect x="186" y="50" width="96" height="80" fill="#788196"/><g fill="#DDE1E8"><rect x="56" y="42" width="22" height="16"/><rect x="94" y="42" width="22" height="16"/><rect x="132" y="42" width="22" height="16"/><rect x="56" y="68" width="22" height="16"/><rect x="94" y="68" width="22" height="16"/><rect x="132" y="68" width="22" height="16"/><rect x="202" y="64" width="20" height="14"/><rect x="244" y="64" width="20" height="14"/></g><rect y="96" width="320" height="54" fill="#3F74B8"/><path d="M0 104q20-9 40 0t40 0 40 0 40 0 40 0 40 0 40 0 40 0M0 124q20-9 40 0t40 0 40 0 40 0 40 0 40 0 40 0 40 0" fill="none" stroke="#DCE8F7" stroke-width="3"/>',
+  octopus:'<rect width="320" height="150" fill="#0F3B5C"/><g fill="none" stroke="#F08A6B" stroke-width="10" stroke-linecap="round"><path d="M136 84q-18 34-52 30"/><path d="M148 92q-8 34-30 44"/><path d="M160 94q0 28 4 44"/><path d="M172 92q10 30 32 40"/><path d="M184 84q20 30 54 26"/></g><ellipse cx="160" cy="60" rx="40" ry="36" fill="#F08A6B"/><circle cx="146" cy="62" r="6" fill="#fff"/><circle cx="174" cy="62" r="6" fill="#fff"/><circle cx="147" cy="63" r="2.5" fill="#12141A"/><circle cx="175" cy="63" r="2.5" fill="#12141A"/><g fill="#7FB6D6"><circle cx="60" cy="40" r="5"/><circle cx="74" cy="22" r="3"/><circle cx="262" cy="34" r="4"/></g>',
+  can:'<rect width="320" height="150" fill="#FFE23D"/><g stroke="#12141A" stroke-width="4" stroke-linecap="round"><path d="M92 40l-22-12M86 75H58M92 110l-22 12M228 40l22-12M234 75h28M228 110l22 12"/></g><rect x="132" y="18" width="56" height="114" rx="9" fill="#12141A"/><rect x="132" y="30" width="56" height="5" fill="#565D6B"/><path d="M166 44l-20 36h13l-8 30 24-40h-13z" fill="#FFE23D"/>',
+  ticket:'<rect width="320" height="150" fill="#43307A"/><g fill="#6B55A8"><circle cx="40" cy="30" r="3"/><circle cx="286" cy="118" r="4"/><circle cx="270" cy="26" r="2.5"/><circle cx="52" cy="120" r="2.5"/></g><rect x="64" y="38" width="192" height="74" rx="9" fill="#fff" transform="rotate(-4 160 75)"/><g transform="rotate(-4 160 75)"><path d="M204 40v70" stroke="#43307A" stroke-width="2" stroke-dasharray="5 5"/><path d="M110 56l5.6 12 13 1.6-9.6 9 2.6 13-11.6-6.6-11.6 6.6 2.6-13-9.6-9 13-1.6z" fill="#43307A"/><rect x="140" y="62" width="50" height="7" fill="#43307A"/><rect x="140" y="78" width="36" height="6" fill="#C5CBD6"/><rect x="216" y="60" width="26" height="30" fill="#C5CBD6"/></g>',
+  chart:'<rect width="320" height="150" fill="#fff"/><path d="M60 20v104h170" fill="none" stroke="#12141A" stroke-width="2.5"/><g stroke="#E3E7EE" stroke-width="1"><path d="M62 96h168M62 68h168M62 40h168"/></g><rect x="96" y="34" width="62" height="90" fill="#16845A"/><path d="M127 12l-12 16h24z" fill="#16845A"/><path d="M232 0l-10 15 10 15-10 15 10 15-10 15 10 15-10 15 10 15-10 15 10 15H320V0z" fill="#DDE1E8"/>',
+  bike:'<rect width="320" height="150" fill="#C6D2C2"/><rect x="0" y="24" width="320" height="34" fill="#9FB099"/><rect y="62" width="320" height="88" fill="#59606F"/><rect y="104" width="320" height="34" fill="#16845A"/><path d="M0 100h320" stroke="#fff" stroke-width="3" stroke-dasharray="18 12"/><g fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="132" cy="122" r="11"/><circle cx="176" cy="122" r="11"/><path d="M132 122l14-20h20l10 20M146 102l10 20h20M160 96h10"/></g>',
+  tray:'<rect width="320" height="150" fill="#DDE1E8"/><rect x="58" y="26" width="204" height="98" rx="12" fill="#9AA2B1"/><rect x="68" y="36" width="184" height="78" rx="8" fill="#C5CBD6"/><circle cx="160" cy="75" r="34" fill="#F2C55C"/><circle cx="160" cy="75" r="27" fill="#F6E3B4"/><g fill="#D9685A"><circle cx="150" cy="66" r="5"/><circle cx="172" cy="72" r="5"/><circle cx="156" cy="88" r="5"/></g>',
+  dough:'<rect width="320" height="150" fill="#4A3B30"/><ellipse cx="160" cy="80" rx="76" ry="44" fill="#F1E3C4"/><ellipse cx="144" cy="68" rx="30" ry="15" fill="#F8F0DC"/><g fill="#fff" opacity=".7"><circle cx="58" cy="40" r="3"/><circle cx="80" cy="122" r="2.5"/><circle cx="264" cy="44" r="3"/><circle cx="252" cy="120" r="2"/></g>',
+  ambulance:'<rect width="320" height="150" fill="#AEBBD0"/><rect x="20" y="24" width="150" height="96" fill="#8B5E4B"/><rect x="74" y="72" width="40" height="48" fill="#5E3F33"/><g fill="#E9DCCB"><rect x="36" y="40" width="24" height="20"/><rect x="82" y="40" width="24" height="20"/><rect x="128" y="40" width="24" height="20"/></g><rect y="120" width="320" height="30" fill="#59606F"/><rect x="176" y="70" width="110" height="52" rx="5" fill="#fff"/><path d="M286 88h14l10 16v18h-24z" fill="#fff"/><rect x="176" y="104" width="134" height="7" fill="#E0342B"/><path d="M224 76h10v8h8v10h-8v8h-10v-8h-8V84h8z" fill="#E0342B"/><rect x="226" y="60" width="14" height="10" fill="#2747E8"/><circle cx="206" cy="124" r="11" fill="#12141A"/><circle cx="282" cy="124" r="11" fill="#12141A"/>',
+  snow:'<rect width="320" height="150" fill="#9DB7D9"/><g fill="#fff"><circle cx="34" cy="28" r="5"/><circle cx="52" cy="92" r="4"/><circle cx="24" cy="126" r="3"/><circle cx="284" cy="36" r="4"/><circle cx="296" cy="100" r="5"/><circle cx="268" cy="132" r="3"/></g><rect x="78" y="18" width="164" height="114" fill="#fff"/><rect x="78" y="18" width="164" height="22" fill="#2B4C8C"/><rect x="92" y="54" width="120" height="10" fill="#12141A"/><rect x="92" y="74" width="136" height="6" fill="#C5CBD6"/><rect x="92" y="87" width="110" height="6" fill="#C5CBD6"/><rect x="92" y="100" width="126" height="6" fill="#C5CBD6"/><path d="M78 124l8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 8-8 8 8 4-4v12H78z" fill="#9DB7D9"/>',
+  cubes:'<rect width="320" height="150" fill="#BFD3A6"/><rect y="112" width="320" height="38" fill="#9DBB7E"/><ellipse cx="150" cy="86" rx="62" ry="36" fill="#7A5A44"/><circle cx="218" cy="80" r="26" fill="#8A6850"/><circle cx="206" cy="58" r="7" fill="#7A5A44"/><circle cx="232" cy="60" r="7" fill="#7A5A44"/><circle cx="226" cy="78" r="3" fill="#12141A"/><ellipse cx="241" cy="88" rx="6" ry="4.5" fill="#12141A"/><rect x="112" y="112" width="16" height="14" fill="#5E4332"/><rect x="176" y="112" width="16" height="14" fill="#5E4332"/><g fill="#4A3526"><rect x="40" y="110" width="15" height="15"/><rect x="59" y="114" width="15" height="15"/><rect x="49" y="93" width="15" height="15"/></g>',
+  hearts:`<rect width="320" height="150" fill="#F6C99A"/><rect x="128" y="16" width="64" height="118" rx="10" fill="#12141A"/><rect x="134" y="26" width="52" height="92" rx="3" fill="#fff"/><rect x="142" y="38" width="36" height="36" rx="8" fill="#E07A1F"/><rect x="142" y="86" width="36" height="6" fill="#C5CBD6"/><rect x="142" y="98" width="24" height="6" fill="#C5CBD6"/><g fill="#E0342B">${[[48,22,1.3],[82,58,1],[40,96,1.6],[90,112,.9],[220,26,1],[254,60,1.5],[214,100,1.2],[272,112,.9]].map(([x,y,s]) => `<path transform="translate(${x} ${y}) scale(${s})" d="${HEART}"/>`).join("")}</g>`,
+  blurdoc:'<defs><filter id="blurdoc-f"><feGaussianBlur stdDeviation="3.4"/></filter></defs><rect width="320" height="150" fill="#3D3D4E"/><g filter="url(#blurdoc-f)"><rect x="84" y="14" width="152" height="122" fill="#F2F2EC"/><rect x="98" y="28" width="90" height="10" fill="#333"/><rect x="98" y="50" width="124" height="5" fill="#777"/><rect x="98" y="62" width="110" height="5" fill="#777"/><rect x="98" y="74" width="120" height="5" fill="#777"/><rect x="98" y="86" width="80" height="5" fill="#777"/><rect x="98" y="104" width="124" height="18" fill="none" stroke="#777" stroke-width="2"/></g>',
+  quote:'<rect width="320" height="150" fill="#8E2A3F"/><circle cx="70" cy="64" r="30" fill="#E3B9A0"/><path d="M28 150c0-32 20-48 42-48s42 16 42 48z" fill="#2B3A55"/><path d="M40 58c4-28 56-28 60 0c-10-12-50-12-60 0z" fill="#3A2A22"/><g fill="#fff"><path d="M138 34h18v18c0 10-6 16-16 18v-8c4-1 7-4 7-8h-9zM166 34h18v18c0 10-6 16-16 18v-8c4-1 7-4 7-8h-9z"/><rect x="138" y="84" width="150" height="9"/><rect x="138" y="102" width="120" height="9"/><rect x="138" y="120" width="70" height="6" opacity=".6"/></g>',
+  water:'<rect width="320" height="150" fill="#DCE5D2"/><g stroke="#fff" stroke-width="6"><path d="M0 50h320M0 104h320M90 0v150M190 0v150M260 0v150"/></g><path d="M190 0h130v150H190z" fill="#1F6FB5" opacity=".35"/><path d="M190 0v150" stroke="#1F6FB5" stroke-width="3" stroke-dasharray="8 6"/><path d="M252 40c14 20 22 32 22 44a22 22 0 0 1-44 0c0-12 8-24 22-44z" fill="#1F6FB5"/><path d="M252 68v18M252 95v2" stroke="#fff" stroke-width="5" stroke-linecap="round"/>',
+  shark:'<rect width="320" height="150" fill="#8FA3BD"/><rect x="0" y="20" width="110" height="80" fill="#5E6678"/><rect x="220" y="34" width="100" height="70" fill="#788196"/><g fill="#DDE1E8"><rect x="16" y="34" width="20" height="16"/><rect x="52" y="34" width="20" height="16"/><rect x="236" y="48" width="18" height="14"/><rect x="276" y="48" width="18" height="14"/></g><rect y="86" width="320" height="64" fill="#3F74B8"/><path d="M146 102c6-32 24-46 44-50c-7 17-5 36 5 50z" fill="#4A5568"/><path d="M0 102q20-8 40 0t40 0 40 0 40 0 40 0 40 0 40 0 40 0M0 126q20-8 40 0t40 0 40 0 40 0 40 0 40 0 40 0 40 0" fill="none" stroke="#DCE8F7" stroke-width="3"/>',
+  laptop:'<rect width="320" height="150" fill="#E7DFF2"/><rect x="0" y="104" width="320" height="46" fill="#B9A6D6"/><rect x="104" y="34" width="112" height="72" rx="6" fill="#12141A"/><rect x="111" y="41" width="98" height="56" fill="#7B5EA7"/><path d="M88 106h144l10 12H78z" fill="#565D6B"/><rect x="30" y="52" width="14" height="52" fill="#C2772B"/><rect x="46" y="44" width="12" height="60" fill="#16845A"/><rect x="60" y="58" width="16" height="46" fill="#2747E8"/><rect x="252" y="62" width="34" height="42" rx="3" fill="#fff"/><rect x="258" y="70" width="22" height="5" fill="#C5CBD6"/><rect x="258" y="80" width="16" height="5" fill="#C5CBD6"/>',
+  lock:'<rect width="320" height="150" fill="#2B2F4A"/><g fill="none" stroke="#7C89F4" stroke-width="3" stroke-linecap="round"><path d="M70 75a30 30 0 0 1 0-40M58 85a46 46 0 0 1 0-60M250 75a30 30 0 0 0 0-40M262 85a46 46 0 0 0 0-60"/></g><rect x="122" y="66" width="76" height="62" rx="8" fill="#FFD93B"/><path d="M138 66V50a22 22 0 0 1 44 0v16" fill="none" stroke="#FFD93B" stroke-width="9"/><circle cx="160" cy="92" r="7" fill="#2B2F4A"/><rect x="157" y="96" width="6" height="16" fill="#2B2F4A"/>',
+  minutes:'<rect width="320" height="150" fill="#E9D7DF"/><rect x="70" y="10" width="180" height="140" fill="#fff"/><rect x="86" y="24" width="96" height="9" fill="#12141A"/><g fill="#C5CBD6"><rect x="86" y="44" width="148" height="5"/><rect x="86" y="56" width="132" height="5"/><rect x="86" y="68" width="140" height="5"/></g><rect x="82" y="80" width="156" height="15" fill="#FFD93B"/><rect x="86" y="85" width="120" height="5" fill="#12141A"/><path d="M70 104h180" stroke="#C2477E" stroke-width="3" stroke-dasharray="7 5"/><rect x="70" y="106" width="180" height="44" fill="#E9D7DF" opacity=".88"/>',
+  headline:'<rect width="320" height="150" fill="#D9DCE3"/><rect x="40" y="12" width="240" height="138" fill="#FBFAF6"/><rect x="56" y="22" width="208" height="12" fill="#2B3A55"/><path d="M56 42h208" stroke="#2B3A55" stroke-width="1.5"/><rect x="56" y="52" width="196" height="14" fill="#12141A"/><rect x="56" y="72" width="150" height="14" fill="#12141A"/><g fill="#C5CBD6"><rect x="56" y="98" width="96" height="5"/><rect x="56" y="108" width="90" height="5"/><rect x="56" y="118" width="94" height="5"/><rect x="164" y="98" width="100" height="5"/><rect x="164" y="108" width="92" height="5"/><rect x="164" y="118" width="98" height="5"/></g>',
+  pie:'<rect width="320" height="150" fill="#ECEAFB"/><circle cx="118" cy="75" r="52" fill="#C5CBD6"/><path d="M118 75V23a52 52 0 1 1-49.5 68z" fill="#5A4FCF"/><g fill="#12141A"><rect x="196" y="48" width="14" height="14" fill="#5A4FCF"/><rect x="216" y="51" width="60" height="8"/><rect x="196" y="78" width="14" height="14" fill="#C5CBD6"/><rect x="216" y="81" width="44" height="8"/></g><text x="196" y="124" font-family="sans-serif" font-size="13" font-weight="700" fill="#565C80">n = ?</text>',
+  dog:'<rect width="320" height="150" fill="#E8DCCB"/><rect y="118" width="320" height="32" fill="#CDBBA2"/><ellipse cx="164" cy="104" rx="58" ry="26" fill="#C98A4B"/><circle cx="114" cy="80" r="28" fill="#D89A5A"/><path d="M92 62c-14 4-18 26-8 38 4-10 8-22 8-38zM132 58c12 2 18 22 10 34-4-10-8-20-10-34z" fill="#8B5A2B"/><circle cx="105" cy="78" r="3.5" fill="#12141A"/><circle cx="123" cy="78" r="3.5" fill="#12141A"/><ellipse cx="114" cy="90" rx="6" ry="4.5" fill="#12141A"/><rect x="186" y="96" width="34" height="14" rx="3" fill="#fff"/><path d="M196 103h14M203 96v14" stroke="#D93A27" stroke-width="3"/>',
+  trees:'<rect width="320" height="150" fill="#1E2547"/><circle cx="268" cy="30" r="14" fill="#E9E4C8"/><rect y="118" width="320" height="32" fill="#2E3A2F"/><g fill="#3E5A3A"><circle cx="70" cy="66" r="34"/><circle cx="160" cy="58" r="40"/></g><rect x="64" y="90" width="12" height="30" fill="#4A3526"/><rect x="154" y="88" width="12" height="32" fill="#4A3526"/><rect x="230" y="104" width="44" height="14" rx="3" fill="#6B4A33"/><circle cx="236" cy="104" r="7" fill="#8B6A4F"/><path d="M196 40l40 26" stroke="#FFD93B" stroke-width="3" opacity=".7"/><rect x="186" y="34" width="14" height="10" rx="2" fill="#FFD93B"/>',
+  robot:'<rect width="320" height="150" fill="#DDE3FF"/><rect x="128" y="34" width="64" height="48" rx="10" fill="#2747E8"/><circle cx="148" cy="56" r="7" fill="#fff"/><circle cx="172" cy="56" r="7" fill="#fff"/><path d="M160 34V20" stroke="#2747E8" stroke-width="4"/><circle cx="160" cy="18" r="5" fill="#FFD93B"/><rect x="132" y="88" width="56" height="40" rx="6" fill="#131735"/><path d="M132 98l-22 14M188 98l22 14" stroke="#131735" stroke-width="8" stroke-linecap="round"/><path d="M228 96h28v10a14 14 0 0 1-28 0zM236 120h12v8h-12z" fill="#FFB800"/><rect x="230" y="128" width="24" height="5" fill="#FFB800"/>',
+  honey:'<rect width="320" height="150" fill="#F6E2B3"/><g fill="none" stroke="#E5C27A" stroke-width="3"><path d="M30 30l14-8 14 8v16l-14 8-14-8zM58 46l14-8 14 8v16l-14 8-14-8zM234 84l14-8 14 8v16l-14 8-14-8zM262 100l14-8 14 8v16l-14 8-14-8z"/></g><path d="M132 36h56v8c14 8 18 20 18 40 0 32-14 50-46 50s-46-18-46-50c0-20 4-32 18-40z" fill="#C68A12"/><rect x="128" y="26" width="64" height="14" rx="3" fill="#8B5E3C"/><path d="M128 64c10 6 22-2 32 4s22-2 32 4" stroke="#F6C85F" stroke-width="5" fill="none"/>',
+  bus:'<rect width="320" height="150" fill="#CFE6E2"/><rect y="122" width="320" height="28" fill="#59606F"/><rect x="70" y="40" width="180" height="78" rx="12" fill="#2F8F83"/><g fill="#E6F4F2"><rect x="84" y="52" width="34" height="28" rx="3"/><rect x="126" y="52" width="34" height="28" rx="3"/><rect x="168" y="52" width="34" height="28" rx="3"/><rect x="210" y="52" width="26" height="40" rx="3"/></g><rect x="84" y="92" width="40" height="12" rx="3" fill="#FFD93B"/><text x="96" y="102" font-family="sans-serif" font-size="11" font-weight="800" fill="#12141A">7</text><circle cx="104" cy="120" r="12" fill="#12141A"/><circle cx="216" cy="120" r="12" fill="#12141A"/><rect x="272" y="44" width="6" height="78" fill="#565C80"/><rect x="262" y="30" width="26" height="20" rx="3" fill="#2747E8"/>',
+  popcorn:'<rect width="320" height="150" fill="#E8E1D3"/><path d="M128 52h64l-10 86h-44z" fill="#fff"/><g fill="#D93A27"><path d="M134 52h10l-3 86h-8zM156 52h10l-1 86h-8zM178 52h10l-7 86h-7z"/></g><g fill="#5B3A1E"><circle cx="136" cy="44" r="11"/><circle cx="155" cy="38" r="12"/><circle cx="175" cy="42" r="11"/><circle cx="188" cy="50" r="8"/></g><g fill="#8A6A44"><circle cx="146" cy="30" r="8"/><circle cx="168" cy="30" r="9"/></g><g fill="none" stroke="#9AA2B1" stroke-width="4" stroke-linecap="round" opacity=".7"><path d="M150 22c-6-8 6-12 0-20M172 20c-6-8 6-12 0-20"/></g>',
+  field:'<rect width="320" height="150" fill="#BFD9F2"/><rect y="78" width="320" height="72" fill="#5E9E4F"/><path d="M0 116h320" stroke="#fff" stroke-width="3" opacity=".6"/><rect x="214" y="22" width="88" height="56" fill="#9AA2B1"/><g fill="#DDE1E8"><rect x="226" y="34" width="14" height="12"/><rect x="250" y="34" width="14" height="12"/><rect x="274" y="34" width="14" height="12"/></g>' + [30,52,74,96,118,140,162,184,62,86,108,130,152].map((x,i)=>`<circle cx="${x}" cy="${i<8?92:104}" r="7" fill="${['#2747E8','#D93A27','#FFD93B','#16845A','#7B5EA7'][i%5]}"/><rect x="${x-6}" y="${i<8?98:110}" width="12" height="16" rx="4" fill="${['#2747E8','#D93A27','#FFD93B','#16845A','#7B5EA7'][(i+2)%5]}"/>`).join(""),
+  fire:'<rect width="320" height="150" fill="#2B1B2E"/><rect x="70" y="46" width="180" height="90" fill="#4A3A44"/><g fill="#FFB02E"><rect x="88" y="62" width="24" height="20"/><rect x="134" y="62" width="24" height="20"/><rect x="180" y="62" width="24" height="20"/><rect x="88" y="98" width="24" height="20"/><rect x="180" y="98" width="24" height="20"/></g><path d="M86 50c4-22 22-28 18-46 18 12 24 30 18 46 10-8 12-20 10-30 16 14 22 34 14 50 8-6 14-18 12-30 18 18 18 44 6 60z" fill="#FF6A2B"/><path d="M110 50c4-14 14-18 12-30 10 10 12 22 8 32 6-4 8-12 8-18 10 10 10 26 2 36z" fill="#FFD93B"/><rect y="136" width="320" height="14" fill="#1B1220"/>',
+  scoreboard:'<rect width="320" height="150" fill="#14183F"/><rect x="60" y="22" width="200" height="106" rx="8" fill="#0A0C22" stroke="#565C80" stroke-width="3"/><g font-family="sans-serif" font-weight="800" text-anchor="middle"><text x="110" y="48" font-size="13" fill="#B9BEE6">HOME</text><text x="210" y="48" font-size="13" fill="#B9BEE6">GUEST</text><text x="110" y="96" font-size="40" fill="#FFB02E">54</text><text x="210" y="96" font-size="40" fill="#FFB02E">58</text><text x="160" y="118" font-size="12" fill="#7BF0C2">FINAL · OT</text></g>',
+  blurref:'<defs><filter id="blurref-f"><feGaussianBlur stdDeviation="5"/></filter></defs><rect width="320" height="150" fill="#C9A66B"/><g filter="url(#blurref-f)"><rect y="104" width="320" height="46" fill="#B08850"/><circle cx="160" cy="46" r="18" fill="#E0B596"/><rect x="138" y="62" width="44" height="64" fill="#fff"/><g fill="#12141A"><rect x="138" y="70" width="44" height="8"/><rect x="138" y="88" width="44" height="8"/><rect x="138" y="106" width="44" height="8"/></g><circle cx="80" cy="60" r="16" fill="#2747E8"/><circle cx="246" cy="64" r="16" fill="#D93A27"/></g>',
+  cash:'<rect width="320" height="150" fill="#1E2228"/><rect y="0" width="320" height="10" fill="#000"/><rect y="140" width="320" height="10" fill="#000"/><g fill="none" stroke="#000" stroke-width="0"/><path d="M86 150c0-34 18-54 46-54s46 20 46 54z" fill="#f2f2f2"/><g fill="#12141A"><path d="M98 112h68v10H98zM96 132h72v10H96z"/></g><circle cx="132" cy="64" r="24" fill="#C69C82"/><path d="M178 100l40-14 6 20-40 14z" fill="#3E8E5A"/><path d="M188 104l40-14 6 20-40 14z" fill="#4FA56C"/><path d="M226 92c10-4 22 0 24 10s-8 16-18 18z" fill="#B88A72"/><text x="300" y="26" font-family="sans-serif" font-size="10" font-weight="700" fill="#9AA2B1" text-anchor="end">MOVIE STILL</text>',
+  selfie:'<rect width="320" height="150" fill="#6B4A33"/><rect x="0" y="0" width="320" height="56" fill="#3E2A1D"/><g fill="#F2E3C4"><rect x="20" y="14" width="40" height="28" rx="3"/><rect x="260" y="14" width="40" height="28" rx="3"/></g><circle cx="122" cy="72" r="24" fill="#E3B9A0"/><path d="M96 150c0-30 12-46 26-46s26 16 26 46z" fill="#2E6B4F"/><path d="M98 64c2-24 46-24 48 0-8-8-40-8-48 0z" fill="#2B1B12"/><circle cx="198" cy="70" r="24" fill="#C98F6E"/><path d="M172 150c0-30 12-46 26-46s26 16 26 46z" fill="#6B3FA0"/><path d="M172 70c0-30 52-30 52 0l4 26c-10-6-10-22-10-26-8-10-32-10-40 0 0 4 0 20-10 26z" fill="#E8C35E"/><circle cx="240" cy="124" r="10" fill="#fff" opacity=".85"/>',
+  hoodie:'<defs><filter id="hoodie-f"><feGaussianBlur stdDeviation="6"/></filter></defs><rect width="320" height="150" fill="#C9C2D6"/><g filter="url(#hoodie-f)"><rect y="98" width="320" height="52" fill="#A69FB4"/><rect x="40" y="20" width="60" height="80" fill="#E8E2F0"/><path d="M128 150c0-50 14-90 34-90s34 40 34 90z" fill="#3A3448"/><circle cx="162" cy="58" r="22" fill="#3A3448"/><circle cx="162" cy="62" r="12" fill="#B8957E"/><rect x="230" y="40" width="50" height="60" fill="#8F86A3"/></g>',
+  stage:'<rect width="320" height="150" fill="#1D1838"/><path d="M40 0l60 150M280 0l-60 150M160 0v150" stroke="#FFD93B" stroke-width="22" opacity=".12"/><rect x="40" y="96" width="240" height="20" fill="#3E3570"/><rect x="40" y="116" width="240" height="34" fill="#2A2350"/><rect x="60" y="30" width="200" height="10" fill="#565C80"/><g fill="#FF8571"><circle cx="90" cy="44" r="6"/><circle cx="160" cy="44" r="6"/><circle cx="230" cy="44" r="6"/></g><rect x="156" y="62" width="8" height="34" fill="#9AA2B1"/><circle cx="160" cy="58" r="7" fill="#12141A"/><g fill="#0D0B1E">' + [20,46,72,98,124,150,176,202,228,254,280,306].map(x=>`<circle cx="${x}" cy="140" r="11"/>`).join("") + '</g>',
+  coyote:'<rect width="320" height="150" fill="#3B4A3A"/><rect y="104" width="320" height="46" fill="#2C3A2B"/><g fill="#9DA897"><path d="M110 92c10-14 40-18 70-12 14 2 22-6 30-14l8-14 6 16c4 6 4 14-2 20l-12 6v34h-8v-28c-14 4-34 4-50 0v28h-8v-32c-16 8-30 14-44 10 12-2 18-6 10-14z"/></g><path d="M216 52l-6-14 12 10z" fill="#9DA897"/><circle cx="222" cy="64" r="2" fill="#12141A"/><rect x="10" y="10" width="300" height="130" fill="none" stroke="#fff" stroke-width="1.5" opacity=".35"/><text x="18" y="26" font-family="monospace" font-size="11" fill="#fff" opacity=".8">CAM 03  06:04 AM</text>',
+  blurshape:'<defs><filter id="blurshape-f"><feGaussianBlur stdDeviation="7"/></filter></defs><rect width="320" height="150" fill="#1E2A2E"/><rect y="96" width="320" height="54" fill="#22372B"/><g filter="url(#blurshape-f)"><ellipse cx="170" cy="100" rx="44" ry="20" fill="#0A0E10"/><circle cx="214" cy="86" r="14" fill="#0A0E10"/></g><circle cx="40" cy="30" r="3" fill="#fff" opacity=".6"/>',
+  wolves:'<rect width="320" height="150" fill="#A9BACB"/><path d="M0 92l60-40 50 30 60-46 70 50 80-36v100H0z" fill="#7E93A8"/><rect y="104" width="320" height="46" fill="#E9EEF3"/>' + [[60,108,1],[130,100,1.2],[210,110,1],[262,104,.9]].map(([x,y,s])=>`<g transform="translate(${x} ${y}) scale(${s})" fill="#4A4F5A"><path d="M-30 0c6-10 30-12 48-6l10-12 4 10c4 4 2 10-2 14l-8 4v18h-6v-14c-12 2-24 2-34 0v14h-6v-18c-8 2-14 0-16-4z"/><path d="M28-18l-2-10 6 8z"/></g>`).join(""),
+};
+const art = k => k && ART[k] ? `<svg class="art" viewBox="0 0 320 150" aria-hidden="true">${ART[k]}</svg>` : "";
+
+/* ---------- 2. NETWORK ---------- */
+
+const N_NODES = 96;
+const NET = (() => {
+  // Deterministic layout so every player sees the same town.
+  let seed = 11;
+  const rnd = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const pts = [];
+  const far = (a, b) => Math.hypot((a.x - b.x) * 1.25, a.y - b.y);
+  let guard = 0, gap = 0.085;
+  while (pts.length < N_NODES) {
+    const p = { x: 0.03 + rnd() * 0.94, y: 0.05 + rnd() * 0.9 };
+    if (pts.every(q => far(p, q) > gap)) pts.push(p);
+    if (++guard % 4000 === 0) gap *= 0.92;       // relax if the canvas is getting crowded
+  }
+  const adj = pts.map(() => new Set());
+  pts.forEach((p, i) => {
+    pts.map((q, j) => [far(p, q), j]).filter(d => d[1] !== i).sort((a, b) => a[0] - b[0]).slice(0, 3)
+       .forEach(([, j]) => { adj[i].add(j); adj[j].add(i); });
+  });
+  // Stitch any islands onto the main component.
+  for (;;) {
+    const seen = new Set([0]), q = [0];
+    while (q.length) for (const m of adj[q.shift()]) if (!seen.has(m)) { seen.add(m); q.push(m); }
+    if (seen.size === N_NODES) break;
+    let best = [Infinity, 0, 0];
+    for (const a of seen) for (let b = 0; b < N_NODES; b++) if (!seen.has(b)) { const d = far(pts[a], pts[b]); if (d < best[0]) best = [d, a, b]; }
+    adj[best[1]].add(best[2]); adj[best[2]].add(best[1]);
+  }
+  const nearest = (x, y) => pts.reduce((bi, p, i) => far(p, { x, y }) < far(pts[bi], { x, y }) ? i : bi, 0);
+  return { pts, adj: adj.map(s => [...s]), you: nearest(0.5, 0.5), corners: [nearest(0.08, 0.1), nearest(0.92, 0.9), nearest(0.92, 0.1), nearest(0.08, 0.9)] };
+})();
+
+// Node states: 0 hasn't seen it, 1 misled, 2 got the facts, 3 protected.
+let shown = [], pulses = [], raf = 0;
+const reduceMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+/* Turn up to k untouched nodes into state `to`, walking outward from `seed`.
+   Misinformation cannot travel through protected nodes. Returns how many changed. */
+function spread(to, k, seed, stagger = 70) {
+  const seen = new Set([seed]), queue = [seed], changed = [];
+  while (queue.length && changed.length < k) {
+    const n = queue.shift();
+    if (state.nodes[n] === 0 && n !== NET.you) changed.push(n);
+    for (const m of NET.adj[n]) {
+      if (seen.has(m)) continue;
+      if (to === 1 && state.nodes[m] === 3) continue;
+      seen.add(m); queue.push(m);
+    }
+  }
+  const now = performance.now();
+  changed.forEach((n, i) => { state.nodes[n] = to; pulses.push({ n, to, t0: now + i * stagger }); });
+  if (reduceMotion()) syncNet(); else kick();
+  return changed.length;
+}
+function syncNet() { shown = state.nodes.slice(); pulses = []; draw(performance.now()); }
+function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+function tick(now) {
+  raf = 0;
+  let live = false;
+  for (const p of pulses) { if (now >= p.t0) shown[p.n] = p.to; if (now < p.t0 + 650) live = true; }
+  draw(now);
+  if (live) kick(); else pulses = [];
+}
+
+const canvas = document.getElementById("net");
+const ctx = canvas.getContext ? canvas.getContext("2d") : null;
+const css = name => getComputedStyle(document.body).getPropertyValue(name).trim();   // body carries the per-screen theme
+function draw(now) {
+  if (!ctx) return;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  const dpr = window.devicePixelRatio || 1;
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const C = { idle: css("--field-soft"), fake: css("--fake-lit"), real: css("--real-lit"), field: css("--field"), marker: css("--pop"), line: css("--net-line"), guard: css("--guard"), text: css("--on-field") };
+  const r = Math.max(3.2, Math.min(8, Math.min(w, h) / 50));
+  const P = i => [r + NET.pts[i].x * (w - 2 * r), r + NET.pts[i].y * (h - 2 * r)];
+
+  ctx.lineWidth = 1; ctx.strokeStyle = C.line; ctx.beginPath();
+  NET.adj.forEach((ns, i) => ns.forEach(j => { if (j > i) { const [a, b] = P(i), [c, d] = P(j); ctx.moveTo(a, b); ctx.lineTo(c, d); } }));
+  ctx.stroke();
+
+  for (const p of pulses) {
+    const t = (now - p.t0) / 650; if (t < 0 || t > 1) continue;
+    const [x, y] = P(p.n);
+    ctx.beginPath(); ctx.arc(x, y, r + t * r * 3, 0, Math.PI * 2);
+    ctx.strokeStyle = p.to === 1 ? C.fake : p.to === 2 ? C.real : C.guard;
+    ctx.globalAlpha = 1 - t; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = 1;
+  }
+
+  NET.pts.forEach((_, i) => {
+    if (i === NET.you) return;
+    const [x, y] = P(i), s = shown[i] || 0;
+    ctx.beginPath(); ctx.arc(x, y, s === 3 ? r * 0.8 : r, 0, Math.PI * 2);
+    if (s === 3) { ctx.fillStyle = C.field; ctx.fill(); ctx.lineWidth = r * 0.5; ctx.strokeStyle = C.guard; ctx.stroke(); }
+    else { ctx.fillStyle = s === 1 ? C.fake : s === 2 ? C.real : C.idle; ctx.fill(); }
+  });
+
+  // You: a yellow diamond.
+  const [yx, yy] = P(NET.you);
+  ctx.save(); ctx.translate(yx, yy); ctx.rotate(Math.PI / 4);
+  ctx.fillStyle = C.marker; ctx.fillRect(-r * 1.15, -r * 1.15, r * 2.3, r * 2.3); ctx.restore();
+  if (h > 220) {
+    ctx.font = `700 13px ${css("--body")}`; ctx.fillStyle = C.text; ctx.textBaseline = "middle";
+    ctx.fillText(L(UI.you), yx + r * 2.2, yy);
+  }
+}
+if (window.ResizeObserver) new ResizeObserver(() => draw(performance.now())).observe(canvas);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => draw(performance.now()));
+
+/* ---------- 3. STATE ---------- */
+
+let state;
+const fresh = (keep = {}) => ({
+  lang: keep.lang || ((navigator.language || "en").toLowerCase().startsWith("zh") ? "zh" : "en"),
+  level: keep.level || "normal",
+  guide: { on: keep.guide ? keep.guide.on : true, at: 0, pick0: 0, post: 0 },   // see GUIDE below
+  screen: "intro",                       // intro | forge | forgeEnd | feed | result
+  forge: { picks: [], story: null, last: keep.forge ? keep.forge.story || keep.forge.last : null },   // chosen story id, last game's story, and "honest" | "mild" | "fake" per step
+  deck: [],                              // post ids dealt for this run
+  recent: keep.deck && keep.deck.length ? keep.deck : (keep.recent || []),   // last game's posts, drawn less often
+  feed: { i: 0, checks: [], verdict: null, guess: null, changed: 0, t0: 0, choices: [], timedOut: false },
+  score: 0,
+  streak: 0,                             // right calls in a row
+  log: [],                               // { id, verdict, ok: true|false|null, trick: true|false|null }
+  nodes: new Array(N_NODES).fill(0),
+});
+
+const L = o => o[state.lang];
+const fill = (s, o) => s.replace(/\{(\w+)\}/g, (_, k) => o[k]);
+const num = n => n.toLocaleString("en-US");
+const count = s => state.nodes.filter(x => x === s).length;
+const level = () => LEVELS[state.level];
+const post = () => POST_BY_ID[state.deck[state.feed.i]];
+const shuffle = list => { const a = list.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* The story the player picked for this game. */
+const story = () => STORY_BY_ID[state.forge.story] || STORIES[0];
+const forgeSteps = () => STEPS_BY_STORY[story().id];
+const multOf = (step, pick) => pick === "fake" ? step.mult : pick === "mild" ? step.mildMult : FORGE.honestMult;
+const forgeReach = picks => Math.round(picks.reduce((r, p, i) => r * multOf(forgeSteps()[i], p), FORGE.base));
+
+/* Pick this run's posts: the right number of fakes and true ones, biased by the level. */
+/* Each game draws a fresh random set. Weights tilt the draw toward the level's difficulty
+   without fixing it, and posts from the previous game are much less likely to come back. */
+const LEVEL_WEIGHTS = { easy:{1:6, 2:2, 3:0.4}, mixed:{1:1, 2:1, 3:1}, hard:{1:0.4, 2:2, 3:5} };
+const RECENT_WEIGHT = 0.12;
+function drawPosts(pool, n, weight) {
+  const left = pool.slice(), out = [];
+  while (out.length < n && left.length) {
+    const total = left.reduce((t, p) => t + weight(p), 0);
+    let r = Math.random() * total, i = 0;
+    while (i < left.length - 1 && (r -= weight(left[i])) > 0) i++;
+    out.push(left.splice(i, 1)[0]);
+  }
+  return out;
+}
+function deal(lv, recent = []) {
+  const w = LEVEL_WEIGHTS[lv.prefer], seen = new Set(recent);
+  const weight = p => w[p.level] * (seen.has(p.id) ? RECENT_WEIGHT : 1);
+  const take = (truth, n) => drawPosts(POSTS.filter(p => p.truth === truth), n, weight);
+  return shuffle([...take("fake", lv.posts - lv.reals), ...take("real", lv.reals)]).map(p => p.id);
+}
+const maxScore = () => state.deck.reduce((s, id) => s + (POST_BY_ID[id].truth === "fake" ? RULES.fake.flag[2] + TRICK_BONUS : RULES.real.share[2]), 0);
+
+let timerId = 0;
+function armTimer() {
+  clearTimeout(timerId);
+  const T = level().timer;
+  if (state.screen !== "feed" || !T || state.feed.verdict) return;
+  timerId = setTimeout(() => ACTIONS.verdict("pass", true), Math.max(0, T * 1000 - (Date.now() - state.feed.t0)));
+}
+function openPost(i) {
+  const p = POST_BY_ID[state.deck[i]], n = level().trickChoices;
+  let choices = TRICK_ORDER;
+  if (n < TRICK_ORDER.length && p.tricks.length) {             // easier levels: fewer wrong answers
+    const keep = new Set([...p.tricks, ...shuffle(TRICK_ORDER.filter(t => !p.tricks.includes(t))).slice(0, n - p.tricks.length)]);
+    choices = TRICK_ORDER.filter(t => keep.has(t));
+  }
+  state.feed = { i, checks: [], verdict: null, guess: null, changed: 0, t0: Date.now(), choices, timedOut: false };
+  armTimer();
+}
+
+/* The first-round guide. Steps run in order. A step shows when `ready`, and is skipped once
+   `passed` (the player already did it) or once the game has moved to a later screen.
+   Steps with `btn` wait for that button; the others wait for the player's own action. */
+const SCREENS = ["intro", "pickStory", "forge", "forgeEnd", "feed", "result"];
+const picked = s => s.forge.picks.length;
+const onPost = (s, g) => s.feed.i === g.post;
+const flaggedFake = s => s.feed.verdict === "flag" && post().truth === "fake";
+const whereMap = () => L(UI.where[window.matchMedia && window.matchMedia("(max-width:900px)").matches ? "top" : "side"]);
+const GUIDE = [
+  { id:"story", screen:"pickStory", target:".stories", place:"before",
+    ready:() => true, passed:() => false },
+  { id:"truth", screen:"forge", target:".truth", place:"after", btn:"next",
+    ready:(s, g) => picked(s) === g.pick0, passed:(s, g) => picked(s) > g.pick0 },
+  { id:"pick", screen:"forge", target:".opts", place:"before",
+    ready:(s, g) => picked(s) === g.pick0, passed:(s, g) => picked(s) > g.pick0 },
+  { id:"post", screen:"forge", target:".phone", place:"before", btn:"next",
+    ready:(s, g) => picked(s) > g.pick0, passed:(s, g) => picked(s) > g.pick0 + 1 },
+  { id:"town", screen:"forge", target:".map", place:"stage", btn:"ok",
+    ready:(s, g) => picked(s) > g.pick0, passed:(s, g) => picked(s) > g.pick0 + 2,
+    vars:s => ({ where: whereMap(), left: forgeSteps().length - picked(s) }) },
+  { id:"read", screen:"feed", target:".phone .post", place:"before", btn:"next",
+    ready:(s, g) => onPost(s, g) && !s.feed.verdict && !s.feed.checks.length, passed:(s, g) => !onPost(s, g) || !!s.feed.verdict || s.feed.checks.length > 0 },
+  { id:"tools", screen:"feed", target:".tools", place:"before",
+    ready:(s, g) => onPost(s, g) && !s.feed.verdict && !s.feed.checks.length, passed:(s, g) => !onPost(s, g) || !!s.feed.verdict || s.feed.checks.length > 0,
+    vars:() => ({ n: level().checks }) },
+  { id:"evidence", screen:"feed", target:".tray .ev", place:"after", btn:"next",
+    ready:(s, g) => onPost(s, g) && !s.feed.verdict && s.feed.checks.length > 0, passed:(s, g) => !onPost(s, g) || !!s.feed.verdict,
+    vars:() => ({ hint: level().hints ? L(UI.hintTag) : "" }) },
+  { id:"calls", screen:"feed", target:".calls", place:"before",
+    ready:(s, g) => onPost(s, g) && !s.feed.verdict, passed:(s, g) => !onPost(s, g) || !!s.feed.verdict },
+  { id:"outcome", screen:"feed", target:".outcome", place:"before", btn:"next",
+    ready:(s, g) => onPost(s, g) && !!s.feed.verdict, passed:(s, g) => !onPost(s, g),
+    vars:() => ({ where: whereMap() }) },
+  { id:"trick", screen:"feed", target:".chips", place:"before",
+    ready:(s, g) => onPost(s, g) && flaggedFake(s) && s.feed.guess === null,
+    passed:(s, g) => !onPost(s, g) || s.feed.guess !== null || (!!s.feed.verdict && !flaggedFake(s)) },
+  { id:"next", screen:"feed", target:".nextrow", place:"before",
+    ready:(s, g) => onPost(s, g) && !!s.feed.verdict, passed:(s, g) => !onPost(s, g) },
+];
+function guideStep() {
+  const g = state.guide, here = SCREENS.indexOf(state.screen);
+  if (!g.on) return null;
+  while (g.at < GUIDE.length) {
+    const st = GUIDE[g.at], there = SCREENS.indexOf(st.screen);
+    if (there < here || (there === here && st.passed(state, g))) { g.at++; continue; }
+    return there === here && st.ready(state, g) ? st : null;
+  }
+  return null;                                    // every step done; the guide stays on for the next game
+}
+function mountGuide(st) {
+  document.querySelectorAll(".guided").forEach(el => el.classList.remove("guided"));   // the map outlives a re-render
+  const target = st && document.querySelector(st.target);
+  if (!target) return;
+  target.classList.add("guided");
+  const el = document.createElement("div");
+  el.className = "coach " + (st.place === "after" ? "up" : st.place === "before" ? "down" : "");
+  el.setAttribute("role", "status");
+  el.innerHTML = `<p>${fill(L(UI.guide[st.id]), st.vars ? st.vars(state) : {})}</p>
+    <div class="coach-btns">${st.btn ? `<button class="coach-next" data-act="guideNext">${L(UI.guideBtn[st.btn])}</button>` : ""}</div>`;
+  if (st.place === "stage") document.querySelector("#stage .brief").insertAdjacentElement("afterend", el);
+  else target.insertAdjacentElement(st.place === "after" ? "afterend" : "beforebegin", el);
+  // Keep the tip on screen. On phones the town band is pinned to the top and would cover it.
+  const band = window.matchMedia && window.matchMedia("(max-width:900px)").matches ? document.getElementById("town").offsetHeight : 0;
+  el.style.scrollMarginTop = band + 16 + "px";
+  const r = el.getBoundingClientRect();
+  if (r.top < band || r.bottom > window.innerHeight) el.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" });
+}
+
+/* ---------- 4. VIEWS ---------- */
+
+function postHTML({ author, time, text, artKey, likes, shares, stamp, freshStamp }) {
+  return `<article class="post">
+    <header><span class="av" style="--c:${author.color}">${L(author.name).trim()[0].toUpperCase()}</span>
+      <span class="who"><b>${L(author.name)}</b><span class="handle">${author.handle}, ${L(time)}</span></span></header>
+    <p class="ptext">${L(text)}</p>
+    ${art(artKey)}
+    <p class="pstats">${fill(L(UI.stats), { likes, shares })}</p>
+    ${stamp ? `<span class="stamp disp ${stamp === "real" ? "real" : ""} ${freshStamp ? "fresh" : ""}">${L(stamp === "real" ? UI.stampReal : UI.stampFake)}</span>` : ""}
+  </article>`;
+}
+const feedPost = (p, extra = {}) => postHTML({ author: p.author, time: p.time, text: p.text, artKey: p.art, likes: p.likes, shares: p.shares, ...extra });
+
+const phone = (tab, inner) => `<section class="phone">
+  <div class="appbar"><b class="logo disp">Murmur</b><span>${L(tab)}</span></div>
+  <div class="screen">${inner}</div>
+</section>`;
+
+function viewIntro() {
+  const or = L(UI.titleOr);
+  return `<h1 class="title disp" aria-label="${L(UI.brand)}">${L(UI.title).map(([word, kind], i) =>
+      `${i && or ? `<span class="or">${or}</span>` : ""}<span class="st ${kind}">${word}</span>`).join("")}</h1>
+  <p class="gloss">${L(UI.gloss)}</p>
+  <p class="lede disp">${L(UI.lede)}</p>
+  <p class="lead">${L(UI.introBody)}</p>
+  <div class="levels">
+    <span class="kicker" id="levelLabel">${L(UI.levelLabel)}</span>
+    <div class="levelrow" role="group" aria-labelledby="levelLabel">${LEVEL_ORDER.map(id =>
+      `<button class="level" data-act="level" data-v="${id}" aria-pressed="${state.level === id}">${L(LEVELS[id].name)}</button>`).join("")}</div>
+    <p class="fine">${L(level().blurb)}</p>
+  </div>
+  <div class="settings">
+  <div class="levels">
+    <span class="kicker" id="fxLabel">${L(UI.fxLabel)}</span>
+    <div class="levelrow" role="group" aria-labelledby="fxLabel">
+      <button class="level" data-act="fx" data-v="on" aria-pressed="${fxOn}">${L(UI.switch.on)}</button>
+      <button class="level" data-act="fx" data-v="off" aria-pressed="${!fxOn}">${L(UI.switch.off)}</button>
+    </div>
+  </div>
+  <div class="levels">
+    <span class="kicker" id="sfxLabel">${L(UI.sfxLabel)}</span>
+    <div class="levelrow" role="group" aria-labelledby="sfxLabel">
+      <button class="level" data-act="sfx" data-v="on" aria-pressed="${sfxOn}">${L(UI.switch.on)}</button>
+      <button class="level" data-act="sfx" data-v="off" aria-pressed="${!sfxOn}">${L(UI.switch.off)}</button>
+    </div>
+  </div>
+  </div>
+  <div><button class="btn cta" data-act="start">${L(UI.startBtn)}</button></div>
+  ${state.guide.on ? `<p class="fine">${L(UI.guideNote)}</p>` : ""}
+  <ol class="acts">${UI.acts.map((a, i) => `<li><span class="n disp">${i + 1}</span><h3 class="disp">${L(a.h)}</h3><p>${fill(L(a.p), { n: POSTS.length, s: STORIES.length })}</p></li>`).join("")}</ol>
+  <p class="statline"><b>${L(UI.stat)}</b> ${L(UI.statCite)}</p>`;
+}
+
+function forgePreview(picks, nowSlot) {
+  const val = slot => { const i = forgeSteps().findIndex(s => s.slot === slot); return picks[i] ? { step: forgeSteps()[i], pick: picks[i] } : null; };
+  const empty = slot => `<div class="slot ${slot === nowSlot ? "now" : ""}">+ ${L(UI.slots[slot])}</div>`;
+  const text = (slot, cls) => { const v = val(slot); return v ? `<p class="${cls}">${L(v.step[v.pick + "Show"] || v.step[v.pick])}</p>` : empty(slot); };
+  const acc = val("account"), img = val("image");
+  const a = acc ? acc.step[acc.pick + "Acc"] : null;
+  return `<article class="post">
+    ${a ? `<header><span class="av" style="--c:${a.color}">${L(a.name)[0]}</span><span class="who"><b>${L(a.name)}</b><span class="handle">${a.handle}</span></span></header>` : empty("account")}
+    ${text("headline", "ptext")}
+    ${text("detail", "ptext")}
+    ${text("source", "src")}
+    ${img ? art(img.step[img.pick + "Art"]) : empty("image")}
+    ${text("hook", "ptext")}
+    ${text("closing", "ptext")}
+    ${text("crowd", "pstats")}
+  </article>`;
+}
+
+function reachRow(picks) {
+  const i = picks.length;
+  let why = "";
+  if (i) {
+    const prev = forgeSteps()[i - 1], t = TRICKS[prev.trick];
+    why = picks[i - 1] === "honest" ? L(UI.lastHonest)
+      : `<strong>${fill(L(UI.lastTrick), { name: L(t.name), m: multOf(prev, picks[i - 1]) })}</strong> ${L(t.desc)}`;
+  }
+  return `<div class="reach"><span class="sub">${L(UI.reach)}</span><b class="disp">${num(forgeReach(picks))}</b><span class="sub">${L(UI.people)}</span>${why ? `<span class="why">${why}</span>` : ""}</div>`;
+}
+
+function viewPickStory() {
+  const last = state.forge.last;
+  return `<div class="brief"><span class="kicker">${L(UI.pickKicker)}</span><h2 class="h2 disp">${L(UI.pickTitle)}</h2></div>
+  <p class="lead">${L(UI.pickLead)}</p>
+  <div class="stories">${STORIES.map(st => `<button class="story" data-act="story" data-v="${st.id}">
+      ${st.id === last ? `<span class="story-last">${L(UI.pickLast)}</span>` : ""}
+      <span class="story-truth">${L(st.truth)}</span>
+      <span class="story-go">${L(UI.pickBtn)}</span>
+    </button>`).join("")}</div>`;
+}
+
+function viewForge() {
+  const picks = state.forge.picks, i = picks.length, step = forgeSteps()[i];
+  const order = ["honest", "mild", "fake"];
+  for (let k = 0; k < i % 3; k++) order.push(order.shift());   // rotate so the honest move isn't always first
+  return `<div class="brief"><span class="kicker">${fill(L(UI.stepOf), { a: i + 1, b: forgeSteps().length })}</span><h2 class="h2 disp">${L(step.ask)}</h2></div>
+  <aside class="truth"><b>${L(UI.truthLabel)}: ${L(story().title)}</b>${L(story().truth)}<i>${L(UI.goal)}</i></aside>
+  <div class="opts">${order.map(k => `<button class="opt" data-act="pick" data-v="${k}">${L(step[k])}</button>`).join("")}</div>
+  ${phone(UI.tabs.compose, forgePreview(picks, step.slot) + reachRow(picks))}`;
+}
+
+/* Forger score, 0 to 100: where your reach sits between telling the truth at every step (0)
+   and using the full trick at every step (100), on a log scale because each trick multiplies reach. */
+function forgeScore(picks) {
+  const n = forgeSteps().length;
+  const honest = FORGE.base * Math.pow(FORGE.honestMult, n);
+  const max = forgeSteps().reduce((r, st) => r * st.mult, FORGE.base);
+  const reach = picks.reduce((r, pk, i) => r * multOf(forgeSteps()[i], pk), FORGE.base);
+  return Math.max(0, Math.min(100, Math.round(100 * Math.log(reach / honest) / Math.log(max / honest))));
+}
+const forgeRank = score => UI.fsRanks.filter(r => score >= r.min).pop();
+function forgeScoreCard(picks, animate) {
+  const score = forgeScore(picks), rank = forgeRank(score);
+  return `<section class="fscore" aria-label="${L(UI.fsLabel)}">
+    <div class="fs-top">
+      <div class="fs-num"><span class="fs-label">${L(UI.fsLabel)}</span><b data-to="${score}">${animate ? 0 : score}</b><small>/100</small></div>
+      <div class="fs-rank"><b class="disp">${L(rank.name)}</b><span>${L(rank.desc)}</span></div>
+    </div>
+    <div class="fs-meter" aria-hidden="true"><i style="width:${animate ? 0 : score}%"></i></div>
+    <span class="sub">${L(UI.fsSteps)}</span>
+    <ol class="fs-steps">${forgeSteps().map((st, i) => { const pk = picks[i];
+      return `<li><span class="fs-slot">${L(UI.slots[st.slot])}</span><span class="pill fs-${pk}">${L(UI.pickName[pk])}</span>
+        <span class="fs-trick">${pk === "honest" ? "" : L(TRICKS[st.trick].name)}</span><span class="fs-mult">×${multOf(st, pk)}</span></li>`; }).join("")}</ol>
+    <p class="fs-note">${L(UI.fsNote)}</p>
+  </section>`;
+}
+function animateForgeScore() {
+  const b = document.querySelector(".fs-num b"), bar = document.querySelector(".fs-meter i");
+  if (!b) return;
+  const to = +b.dataset.to, t0 = performance.now(), dur = 1100;
+  requestAnimationFrame(() => { if (bar) bar.style.width = to + "%"; });
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur);
+    if (!b.isConnected) return;
+    b.textContent = Math.round(to * easeOut(k));
+    if (k < 1) requestAnimationFrame(step); else sfx(to >= 50 ? "bonus" : "safe");
+  };
+  requestAnimationFrame(step);
+}
+
+function viewForgeEnd(animate) {
+  const picks = state.forge.picks, k = picks.filter(p => p !== "honest").length, t = forgeSteps().length;
+  const honest = Math.round(FORGE.base * Math.pow(FORGE.honestMult, t));
+  return `<div class="brief"><span class="kicker">${L(UI.act1Done)}</span><h2 class="h2 disp">${fill(L(UI.endHead), { n: num(forgeReach(picks)) })}</h2></div>
+  ${forgeScoreCard(picks, animate)}
+  <p class="lead">${k ? fill(L(UI.endMany), { h: num(honest), k, t }) : L(UI.endZero)}</p>
+  <div><button class="btn cta" data-act="toFeed">${L(UI.toFeed)}</button></div>
+  ${phone(UI.tabs.posted, forgePreview(picks, null))}
+  <p class="fine">${L(UI.endNote)}</p>`;
+}
+
+function evidence(p, id, hints) {
+  const t = p.tools[id], tool = TOOLS.find(x => x.id === id), key = hints && t.key;
+  return `<div class="ev ${key ? "key" : ""}"><b>${L(tool.name)}${key ? `<span class="tag">${L(UI.strong)}</span>` : ""}</b>${L(t)}</div>`;
+}
+
+function viewFeed(freshStamp) {
+  const f = state.feed, p = post(), lv = level(), done = !!f.verdict, left = lv.checks - f.checks.length;
+  const kicker = fill(L(UI.postOf), { a: f.i + 1, b: state.deck.length, level: L(lv.name) });
+
+  if (!done) {
+    const pts = n => (n > 0 ? "+" : "\u2212") + Math.abs(n);
+    const scoring = fill(L(UI.scoring), { r: pts(RULES.real.share[2]), a1: pts(RULES.real.ask[2]), a2: pts(RULES.fake.ask[2]), w1: pts(RULES.real.flag[2]), w2: pts(RULES.fake.share[2]) });
+    return `<div class="brief"><span class="kicker">${kicker}</span><h2 class="h2 disp">${L(UI.prompt)}</h2></div>
+    ${f.i === 0 && !state.guide.on ? `<aside class="truth"><b>${L(UI.howTitle)}</b>${L(UI.howBody)}</aside>` : ""}
+    ${phone(UI.tabs.feed, `
+      ${feedPost(p)}
+      <div class="tray">
+        <div class="trayhead"><span class="sub step">${fill(L(UI.toolsTitle), { n: lv.checks, t: TOOLS.length })}</span>
+          <span class="sub">${L(UI.checksLeft)} <span class="dots">${Array.from({ length: lv.checks }, (_, k) => `<i class="${k < left ? "" : "off"}"></i>`).join("")}</span></span></div>
+        <div class="tools">${TOOLS.map(t => { const used = f.checks.includes(t.id);
+          return `<button class="tool ${used ? "used" : ""}" data-act="check" data-v="${t.id}" ${used || left === 0 ? "disabled" : ""}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t.icon}</svg><span>${L(t.name)}</span><small>${L(t.hint)}</small></button>`; }).join("")}</div>
+        ${f.checks.map(id => evidence(p, id, lv.hints)).join("")}
+      </div>
+      <span class="sub step">${L(UI.callsTitle)}</span>
+      <div class="calls">${["share", "pass", "ask", "flag"].map(v =>
+        `<button class="call ${v}" data-act="verdict" data-v="${v}"><b>${L(UI[v])}</b><small>${L(UI.callHints[v])}</small></button>`).join("")}</div>
+      <p class="sub">${scoring}</p>`)}`;
+  }
+
+  const entry = state.log[state.log.length - 1];
+  const cls = entry.ok === true ? "good" : entry.ok === false ? "bad" : "";
+  const head = f.timedOut ? UI.timeUp : entry.ok === true ? UI.right : entry.ok === false ? UI.wrong : f.verdict === "ask" ? UI.hedge : UI.passive;
+  const cons = fill(L(UI.cons[p.truth + "_" + f.verdict]), { n: num(f.changed * PEOPLE) });
+  const all = [...f.checks, ...TOOLS.map(t => t.id).filter(id => !f.checks.includes(id))];
+  const kind = fbKind(entry.ok, f.pts, f.timedOut);
+  const icon = { good:"\u2713", bad:"\u2715", safe:"?", none:"\u2013", time:"\u23F1" }[kind];
+  let inner = `<div class="verdictbar ${kind} ${freshStamp ? "fresh" : ""}" role="status">
+      <span class="vb-icon" aria-hidden="true">${icon}</span>
+      <span class="vb-text"><b>${L(UI.fb[kind])}</b>${kind === "good" && state.streak >= 2 ? `<small>${fill(L(UI.streak), { n: state.streak })}</small>` : ""}</span>
+      <span class="vb-pts">${fill(L(UI.fbPts), { p: signed(f.pts) })}</span>
+    </div>
+    ${feedPost(p, { stamp: p.truth, freshStamp })}
+    <div class="outcome ${cls}"><p>${L(p.explain)}</p><p class="cons">${cons}</p></div>`;
+  if (p.truth === "fake" && f.verdict === "flag") {
+    const answered = f.guess !== null, hit = answered && p.tricks.includes(f.guess);
+    inner += `<div class="block"><span class="sub">${L(UI.trickQ)}</span>
+      <div class="chips">${f.choices.map(id => {
+        const c = !answered ? "" : p.tricks.includes(id) ? "hit" : id === f.guess ? "miss" : "";
+        return `<button class="tchip ${c}" data-act="guess" data-v="${id}" title="${L(TRICKS[id].desc)}" ${answered ? "disabled" : ""}>${L(TRICKS[id].name)}</button>`; }).join("")}</div>
+      ${answered ? `<p><b>${hit ? L(UI.trickYes) : fill(L(UI.trickNo), { names: p.tricks.map(id => L(TRICKS[id].name)).join(state.lang === "zh" ? "、" : ", ") })}</b></p>` : ""}
+    </div>`;
+  }
+  inner += `<div class="nextrow"><button class="btn" data-act="next">${L(f.i + 1 < state.deck.length ? UI.next : UI.finish)}</button></div>
+    <div class="block"><span class="sub">${L(UI.allChecks)}</span><div class="list">${all.map(id => evidence(p, id, true)).join("")}</div></div>`;
+  return `<div class="brief"><span class="kicker">${kicker}</span><h2 class="h2 disp">${L(head)} ${L(p.truth === "fake" ? UI.wasFake : UI.wasReal)}</h2></div>
+  ${phone(UI.tabs.feed, inner)}`;
+}
+
+function viewResult() {
+  const right = state.log.filter(e => e.ok === true).length;
+  const named = state.log.filter(e => e.trick === true).length;
+  const fakes = state.deck.filter(id => POST_BY_ID[id].truth === "fake").length;
+  const max = maxScore(), share = max ? state.score / max : 0;
+  const rank = UI.ranks[share >= 0.75 ? 2 : share >= 0.45 ? 1 : 0];
+  return `<div class="brief"><span class="kicker">${fill(L(UI.finalScore), { level: L(level().name), n: num(state.score), max: num(max) })}</span><h2 class="h2 disp">${L(rank)}</h2></div>
+  ${phone(UI.tabs.report, `
+    <div class="tiles">
+      <div class="tile"><b class="disp">${right}/${state.deck.length}</b><span>${L(UI.tiles.right)}</span></div>
+      <div class="tile"><b class="disp">${named}/${fakes}</b><span>${L(UI.tiles.tricks)}</span></div>
+      <div class="tile"><b class="disp">${num(count(1) * PEOPLE)}</b><span>${L(UI.tiles.misled)}</span></div>
+      <div class="tile"><b class="disp">${num(count(3) * PEOPLE)}</b><span>${L(UI.tiles.prot)}</span></div>
+    </div>
+    <div class="block"><span class="sub">${L(UI.recapTitle)}</span>
+      <ul class="recap">${state.log.map(e => { const p = POST_BY_ID[e.id];
+        return `<li><span class="t">${L(p.title)}</span><span class="pill">${L(UI.was[p.truth])}</span><span class="pill ${e.ok === true ? "good" : e.ok === false ? "bad" : ""}">${L(UI.did[e.verdict])}</span></li>`; }).join("")}</ul>
+    </div>
+    <div class="block"><span class="sub">${L(UI.siftTitle)}</span>
+      <ul class="sift">${UI.sift.map(s => `<li><span class="l disp">${s.l}</span><span>${L(s.t)}</span></li>`).join("")}</ul>
+      <span class="cite">${L(UI.siftCite)}</span>
+    </div>
+    <div class="block"><span class="sub">${L(UI.whyTitle)}</span><p>${L(UI.why)}</p><span class="cite">${L(UI.whyCite)}</span></div>
+    <div><button class="btn" data-act="replay">${L(UI.replay)}</button></div>`)}`;
+}
+
+function renderTop() {
+  const s = state.screen;
+  const at = s === "pickStory" || s === "forge" || s === "forgeEnd" ? 0 : s === "feed" ? 1 : s === "result" ? 2 : -1;
+  document.getElementById("top").innerHTML =
+    `${s !== "intro" ? `<button class="homebtn" data-act="home" aria-label="${L(UI.home)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>${L(UI.home)}</button>` : ""}
+     <span class="brand disp">${L(UI.brand)}</span>
+     <ol class="steps">${UI.steps.map((t, i) => `<li class="${i === at ? "now" : i < at ? "done" : ""}">${i + 1}. ${L(t)}</li>`).join("")}</ol>
+     <span class="spacer"></span>
+     ${at > 0 ? `<span class="score">${L(UI.score)} ${num(state.score)}</span>` : ""}
+     <button class="guidebtn" data-act="guideToggle" aria-pressed="${state.guide.on}">${L(UI.guideLabel)} ${L(UI.guideState[state.guide.on ? "on" : "off"])}</button>
+     <div class="lang" role="group" aria-label="Language">
+       <button data-act="lang" data-v="en" aria-pressed="${state.lang === "en"}">EN</button>
+       <button data-act="lang" data-v="zh" aria-pressed="${state.lang === "zh"}">中文</button>
+     </div>`;
+}
+
+function renderTown() {
+  const T = level().timer, ticking = T && state.screen === "feed" && !state.feed.verdict;
+  document.getElementById("clock").innerHTML = ticking
+    ? `<span>${L(UI.timeLeft)}</span><div class="timer"><i style="animation-duration:${T}s;animation-delay:-${Math.max(0, (Date.now() - state.feed.t0) / 1000).toFixed(2)}s"></i></div>` : "";
+  document.getElementById("tally").innerHTML = [["m", 1], ["g", 2], ["p", 3]]
+    .map(([k, s]) => `<li class="${k}"><b class="disp">${num(count(s) * PEOPLE)}</b><span><i></i>${L(UI.legend[k])}</span></li>`).join("");
+  document.getElementById("mapnote").textContent = L(UI.netSub);
+  document.getElementById("demo").innerHTML = state.screen === "intro" ? feedPost(POST_BY_ID.phones, { stamp: "fake" }) : "";
+  const inForge = state.screen === "forge" || state.screen === "pickStory";
+  const usedInForge = new Set(forgeSteps().filter((_, i) => state.forge.picks[i] && state.forge.picks[i] !== "honest").map(s => s.trick));
+  document.getElementById("hand").innerHTML = state.screen === "intro" ? "" : TRICK_ORDER.map(id =>
+    !inForge || usedInForge.has(id)
+      ? `<li class="tcard"><b class="disp">${L(TRICKS[id].name)}</b><span>${L(TRICKS[id].desc)}</span></li>`
+      : `<li class="tcard off"><b class="disp">?</b><span>${L(UI.locked)}</span></li>`).join("");
+}
+
+function render(opts = {}) {
+  document.documentElement.lang = state.lang === "zh" ? "zh-Hans" : "en";
+  document.body.dataset.screen = state.screen;
+  document.title = L(UI.brand);
+  const coach = guideStep();
+  renderTop();
+  const views = { intro: viewIntro, pickStory: viewPickStory, forge: viewForge, forgeEnd: () => viewForgeEnd(opts.scoreIn), feed: () => viewFeed(opts.freshStamp), result: viewResult };
+  document.getElementById("stage").innerHTML = views[state.screen]();
+  renderTown();
+  draw(performance.now());
+  setTimeout(() => draw(performance.now()), 30);
+  if (opts.top) window.scrollTo({ top: 0 });
+  mountGuide(coach);
+}
+
+/* The one unprompted animation: on the title screen a fake post runs through the town. */
+function introWave() {
+  setTimeout(() => {
+    if (state.screen !== "intro" || count(1)) return;
+    spread(1, 58, NET.you, 45);
+    renderTown();
+  }, 700);
+}
+
+/* Quit dialog. Built into the page because the viewer blocks window.confirm. */
+let quitOpen = false, pausedAt = 0;
+function renderModal() {
+  document.body.classList.toggle("modal-open", quitOpen);
+  document.getElementById("modal").innerHTML = quitOpen ? `<div class="scrim" data-act="quitNo"></div>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="quitT" aria-describedby="quitB">
+      <h2 class="disp" id="quitT">${L(UI.quitTitle)}</h2>
+      <p id="quitB">${L(UI.quitBody)}</p>
+      <div class="dialog-btns">
+        <button class="btn" data-act="quitNo" id="quitNo">${L(UI.quitNo)}</button>
+        <button class="btn quit" data-act="quitYes">${L(UI.quitYes)}</button>
+      </div>
+    </div>` : "";
+  if (quitOpen) document.getElementById("quitNo").focus();
+}
+function goHome() {
+  clearTimeout(timerId); quitOpen = false; renderModal();
+  state = fresh(state); syncNet(); render({ top: true }); introWave();
+}
+
+/* ---------- TRANSITIONS ----------
+   Three scene changes, drawn on one full-screen canvas laid over the page:
+     forge   a rubber stamp slams down and red ink spreads from the centre
+     feed    a drop of black ink falls, ripples out, and a magnifier opens onto the feed
+     result  the magnifier pulls back to a small lens, the view inside it changes, then it opens again
+   `swap` changes the screen while the canvas covers it. A click, tap or key skips to the end. */
+const FX = {
+  forge:  { ms:1500, swap:0.55 },
+  feed:   { ms:1650, swap:0.60 },
+  result: { ms:1500, swap:0.52 },
+};
+const INK = "#090B22";
+let fx = null;
+/* Transitions play by default, even with the system's "reduce motion" on, because they are part of the show.
+   Players can switch them off on the home screen; the choice is remembered in this browser. */
+const MOTION_KEY = "capfact-transitions";
+let fxOn = true;
+try { fxOn = localStorage.getItem(MOTION_KEY) !== "off"; } catch (e) {}
+function setFx(on) { fxOn = on; try { localStorage.setItem(MOTION_KEY, on ? "on" : "off"); } catch (e) {} }
+
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+const easeIn = x => x * x * x;
+const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const easeBack = x => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+
+function playTransition(kind, swap, done) {
+  if (fx) endFx();
+  if (!fxOn) { swap(); done && done(); return; }
+  const cv = document.createElement("canvas");
+  cv.className = "fx"; cv.setAttribute("aria-hidden", "true");
+  document.body.appendChild(cv);
+  const rnd = Math.random;
+  // The ink drop and the magnifier land on the phone column, so the lens shows the feed, not the map.
+  const st = document.getElementById("stage").getBoundingClientRect();
+  const focusX = kind === "forge" ? 0.5 : clamp01((st.left + st.width / 2) / innerWidth) || 0.5;
+  fx = { kind, cv, focusX: Math.max(0.2, Math.min(0.8, focusX)), ctx: cv.getContext("2d"), t0: performance.now(), ...FX[kind], swapped: false, swapFn: swap, done, shook: false,
+         ph: [rnd() * 6.3, rnd() * 6.3, rnd() * 6.3],
+         drops: Array.from({ length: 30 }, () => ({ a: rnd() * Math.PI * 2, d: 0.55 + rnd() * 0.75, s: 3 + rnd() * 15, e: 1 + rnd() * 1.4 })) };
+  cv.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); endFx(); });
+  requestAnimationFrame(fxFrame);
+}
+function doSwap() { if (fx && !fx.swapped) { fx.swapped = true; fx.swapFn(); } }
+function endFx() {
+  if (!fx) return;
+  doSwap();
+  fx.cv.remove();
+  const done = fx.done; fx = null;
+  done && done();
+}
+function fxFrame(now) {
+  if (!fx) return;
+  const t = clamp01((now - fx.t0) / fx.ms), cv = fx.cv, ctx = fx.ctx;
+  const w = innerWidth, h = innerHeight, dpr = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const cx = w * fx.focusX, cy = h / 2;
+  const g = { ctx, w, h, cx, cy, R: Math.hypot(Math.max(cx, w - cx), cy) * 1.12, m: Math.min(w, h) };
+  FX_DRAW[fx.kind](t, g);
+  if (t > 0.08 && t < 0.9) skipHint(g, Math.min(1, (t - 0.08) * 6) * Math.min(1, (0.9 - t) * 6));
+  if (t >= fx.swap) doSwap();
+  if (t >= 1) endFx(); else requestAnimationFrame(fxFrame);
+}
+
+/* An ink blot: a circle with a wobbly edge. */
+function blob(ctx, cx, cy, r, ph) {
+  ctx.beginPath();
+  for (let i = 0; i <= 64; i++) {
+    const a = i / 64 * Math.PI * 2;
+    const k = 1 + 0.07 * Math.sin(3 * a + ph[0]) + 0.05 * Math.sin(7 * a + ph[1]) + 0.03 * Math.sin(13 * a + ph[2]);
+    const x = cx + Math.cos(a) * r * k, y = cy + Math.sin(a) * r * k;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.closePath();
+}
+function splatter(g, r, color, scale = 1) {
+  const { ctx, cx, cy } = g;
+  ctx.fillStyle = color;
+  for (const d of fx.drops) {
+    const dist = r * d.d + d.s * 2;
+    ctx.save(); ctx.translate(cx + Math.cos(d.a) * dist, cy + Math.sin(d.a) * dist); ctx.rotate(d.a);
+    ctx.beginPath(); ctx.ellipse(0, 0, d.s * d.e * scale, d.s * scale, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  }
+}
+function shake() {
+  if (fx.shook) return; fx.shook = true;
+  if (reduceMotion()) return;   // keep the stamp, drop the screen shake
+  document.querySelector(".app")?.animate?.([{ transform: "translate(0,0)" }, { transform: "translate(-7px,5px)" }, { transform: "translate(6px,-4px)" }, { transform: "translate(-3px,2px)" }, { transform: "translate(0,0)" }], { duration: 240 });
+}
+function skipHint(g, a) {
+  const { ctx, w, h } = g;
+  ctx.save(); ctx.globalAlpha = a * 0.75; ctx.fillStyle = "#fff";
+  ctx.font = `600 13px ${css("--body")}`; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+  ctx.fillText(L(UI.skipFx), w / 2, h - 18); ctx.restore();
+}
+function stamp(g, scale, alpha, color) {
+  const { ctx, cx, cy, m } = g, text = L(UI.stampFake);
+  const size = Math.min(150, m * 0.17);
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(-11 * Math.PI / 180); ctx.scale(scale, scale); ctx.globalAlpha = alpha;
+  ctx.font = `900 ${size}px ${css("--display")}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const tw = ctx.measureText(text).width, pw = tw + size * 0.55, ph = size * 1.12, lw = size * 0.09;
+  ctx.strokeStyle = ctx.fillStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-pw / 2, -ph / 2, pw, ph, size * 0.14) : ctx.rect(-pw / 2, -ph / 2, pw, ph); ctx.stroke();
+  ctx.fillText(text, 0, size * 0.04);
+  ctx.restore();
+}
+/* The magnifier: a clear lens cut out of the ink, a yellow rim and a handle. */
+function lens(g, r, alpha = 1) {
+  const { ctx, cx, cy } = g;
+  ctx.save(); ctx.globalCompositeOperation = "destination-out";
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  if (alpha <= 0) return;
+  const lw = Math.max(9, r * 0.075), marker = css("--marker");
+  ctx.save(); ctx.globalAlpha = alpha; ctx.lineCap = "round";
+  const a = Math.PI / 4, x0 = cx + Math.cos(a) * (r + lw * 0.4), y0 = cy + Math.sin(a) * (r + lw * 0.4);
+  ctx.strokeStyle = marker; ctx.lineWidth = lw * 1.5;
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + Math.cos(a) * r * 0.95, y0 + Math.sin(a) * r * 0.95); ctx.stroke();
+  ctx.strokeStyle = INK; ctx.lineWidth = lw * 1.1;
+  ctx.beginPath(); ctx.moveTo(x0 + Math.cos(a) * r * 0.42, y0 + Math.sin(a) * r * 0.42); ctx.lineTo(x0 + Math.cos(a) * r * 0.9, y0 + Math.sin(a) * r * 0.9); ctx.stroke();
+  ctx.strokeStyle = marker; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.arc(cx, cy, r + lw / 2, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = lw * 0.45;
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.8, Math.PI * 1.08, Math.PI * 1.36); ctx.stroke();
+  ctx.restore();
+}
+const FX_DRAW = {
+  forge(t, g) {
+    const { ctx, w, h, cx, cy, R } = g, red = css("--fake"), sw = fx.swap;
+    const hit = 0.22, inkP = clamp01((t - hit) / (sw - hit - 0.02));
+    if (t < sw) {
+      ctx.fillStyle = `rgba(10,14,60,${0.38 * clamp01(t / 0.15)})`; ctx.fillRect(0, 0, w, h);
+      if (t >= hit) {
+        shake();
+        const r = R * easeOut(inkP);
+        ctx.fillStyle = red; blob(ctx, cx, cy, r, fx.ph); ctx.fill();
+        if (inkP < 1) splatter(g, r, red);
+      }
+    } else {
+      ctx.fillStyle = red; ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.globalCompositeOperation = "destination-out";
+      blob(ctx, cx, cy, R * 1.1 * easeInOut(clamp01((t - sw) / (1 - sw))), [fx.ph[2], fx.ph[0], fx.ph[1]]); ctx.fill();
+      ctx.restore();
+    }
+    if (t < hit) stamp(g, 2.6 - 1.6 * easeIn(t / hit), clamp01(t / hit * 1.4), red);
+    else if (t < sw + 0.25) stamp(g, 1 + (t > sw ? 0.7 * easeIn((t - sw) / 0.25) : 0), t > sw ? 1 - (t - sw) / 0.25 : 1, t < hit + 0.04 ? red : "#fff");
+  },
+  feed(t, g) {
+    const { ctx, w, h, cx, cy, R, m } = g, sw = fx.swap, hit = 0.26;
+    if (t < hit) {
+      const p = easeIn(t / hit) , y = -80 + (cy + 80) * p, s = Math.max(14, m * 0.034), stretch = 1 + p * 0.9;
+      ctx.fillStyle = `rgba(9,11,34,${0.25 * clamp01(t / 0.12)})`; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = INK;
+      ctx.beginPath(); ctx.moveTo(cx, y - s * 2.4 * stretch);
+      ctx.bezierCurveTo(cx + s * 0.3, y - s * 1.2, cx + s, y - s * 0.6, cx + s, y);
+      ctx.arc(cx, y, s, 0, Math.PI); ctx.bezierCurveTo(cx - s, y - s * 0.6, cx - s * 0.3, y - s * 1.2, cx, y - s * 2.4 * stretch);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.arc(cx - s * 0.35, y - s * 0.2, s * 0.22, 0, Math.PI * 2); ctx.fill();
+      return;
+    }
+    const inkP = clamp01((t - hit) / (sw - hit - 0.02));
+    if (t < sw) {
+      ctx.fillStyle = "rgba(9,11,34,.25)"; ctx.fillRect(0, 0, w, h);
+      const r = R * easeOut(inkP);
+      ctx.fillStyle = INK; blob(ctx, cx, cy, r, fx.ph); ctx.fill();
+      if (inkP < 0.6) splatter(g, r * 0.9, INK, 0.5);
+    } else { ctx.fillStyle = INK; ctx.fillRect(0, 0, w, h); }
+    for (let k = 0; k < 4; k++) {            // ripples
+      const p = clamp01((t - hit - k * 0.07) / 0.5); if (p <= 0 || p >= 1) continue;
+      ctx.strokeStyle = `rgba(255,255,255,${0.42 * (1 - p)})`; ctx.lineWidth = 3 - k * 0.5;
+      ctx.beginPath(); ctx.ellipse(cx, cy, m * 0.05 + p * R * 0.9, (m * 0.05 + p * R * 0.9) * 0.82, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (t >= sw) {
+      const p = (t - sw) / (1 - sw), rs = m * 0.21;
+      const r = p < 0.38 ? rs * easeBack(p / 0.38) : rs + (R * 1.15 - rs) * easeIn((p - 0.38) / 0.62);
+      lens(g, Math.max(0, r));
+    }
+  },
+  result(t, g) {
+    const { ctx, w, h, cx, cy, R, m } = g, sw = fx.swap, rs = m * 0.22, big = R * 1.15;
+    const r = t < 0.46 ? big + (rs - big) * easeInOut(t / 0.46)
+            : t < 0.58 ? rs * (1 - 0.04 * Math.sin((t - 0.46) / 0.12 * Math.PI))
+            : rs + (big - rs) * easeIn((t - 0.58) / 0.42);
+    ctx.fillStyle = INK; ctx.fillRect(0, 0, w, h);
+    lens(g, r, clamp01((big - r) / (big * 0.25)));
+    if (t >= sw && t < sw + 0.12) {          // the view inside the lens changes with a flash
+      ctx.fillStyle = `rgba(255,255,255,${0.55 * (1 - (t - sw) / 0.12)})`;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    }
+  },
+};
+
+/* ---------- FEEDBACK ----------
+   After each call: a result bar in the phone, a glow (and a shake when wrong) on the phone,
+   the score counting to its new value with a floating +/-, a short sound, and a buzz on phones. */
+const SOUND_KEY = "capfact-sound";
+let sfxOn = true, actx = null;
+try { sfxOn = localStorage.getItem(SOUND_KEY) !== "off"; } catch (e) {}
+function setSfx(on) { sfxOn = on; try { localStorage.setItem(SOUND_KEY, on ? "on" : "off"); } catch (e) {} }
+function sfx(kind) {
+  if (!sfxOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const t = actx.currentTime;
+    const tone = (f, at, dur, type = "triangle", vol = 0.16, f2) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t + at);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + at + dur);
+      g.gain.setValueAtTime(0.0001, t + at);
+      g.gain.exponentialRampToValueAtTime(vol, t + at + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + at + dur);
+      o.connect(g).connect(actx.destination); o.start(t + at); o.stop(t + at + dur + 0.03);
+    };
+    if (kind === "good") { tone(659, 0, 0.14); tone(988, 0.1, 0.24); }
+    else if (kind === "bonus") { tone(784, 0, 0.1); tone(1047, 0.08, 0.1); tone(1319, 0.16, 0.2); }
+    else if (kind === "bad") { tone(220, 0, 0.34, "sawtooth", 0.07, 110); tone(233, 0, 0.34, "square", 0.03, 117); }
+    else if (kind === "safe") tone(587, 0, 0.18, "sine", 0.13);
+    else tone(330, 0, 0.12, "sine", 0.07);
+  } catch (e) {}
+}
+const fbKind = (ok, pts, timedOut) => timedOut ? "time" : ok === true ? "good" : ok === false ? "bad" : pts > 0 ? "safe" : "none";
+const signed = n => (n > 0 ? "+" : n < 0 ? "\u2212" : "") + Math.abs(n);
+function bumpScore(from, to) {
+  const el = document.querySelector(".score"); if (!el || from === to) return;
+  const label = L(UI.score), t0 = performance.now(), dur = 550;
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur), v = Math.round(from + (to - from) * easeOut(k));
+    if (el.isConnected) { el.firstChild.nodeValue = `${label} ${num(v)}`; if (k < 1) requestAnimationFrame(step); }
+  };
+  el.firstChild.nodeValue = `${label} ${num(from)}`; requestAnimationFrame(step);
+  const d = document.createElement("span");
+  d.className = "delta " + (to > from ? "up" : "down"); d.textContent = signed(to - from); d.setAttribute("aria-hidden", "true");
+  el.appendChild(d); setTimeout(() => d.remove(), 1200);
+}
+function feedback(kind, from, to) {
+  sfx(kind === "time" ? "none" : kind);
+  if (kind === "bad") { try { navigator.vibrate && navigator.vibrate([60, 40, 60]); } catch (e) {} }
+  const ph = document.querySelector("#stage .phone");
+  if (ph && (kind === "good" || kind === "bad")) {
+    ph.classList.add(kind === "good" ? "glow-good" : "glow-bad");
+    if (kind === "bad" && !reduceMotion()) ph.classList.add("shake");
+  }
+  bumpScore(from, to);
+}
+
+/* ---------- 5. ACTIONS ---------- */
+
+const ACTIONS = {
+  lang(v) { if (v !== state.lang) { state.lang = v; render(); renderModal(); } },
+  level(v) { if (LEVELS[v]) { state.level = v; render(); } },
+  fx(v) { setFx(v === "on"); render(); },
+  sfx(v) { setSfx(v === "on"); render(); if (sfxOn) sfx("good"); },
+  guideNext() { state.guide.at++; render(); },
+  guideToggle() {   // switching it back on restarts the guide from wherever the player is now
+    state.guide = state.guide.on ? { ...state.guide, on: false } : { on: true, at: 0, pick0: state.forge.picks.length, post: state.feed.i };
+    render();
+  },
+  start() {
+    playTransition("forge", () => {
+      state.nodes = new Array(N_NODES).fill(0); syncNet();
+      state.screen = "pickStory"; render({ top: true });
+    });
+  },
+  story(v) {
+    if (!STORY_BY_ID[v] || state.screen !== "pickStory") return;
+    state.forge = { ...state.forge, story: v, picks: [] };
+    state.screen = "forge"; render({ top: true });
+  },
+  pick(v) {
+    state.forge.picks.push(v);
+    if (v === "fake") spread(1, 11, NET.you); else if (v === "mild") spread(1, 6, NET.you); else spread(2, 1, NET.you);
+    if (state.forge.picks.length === forgeSteps().length) {
+      state.screen = "forgeEnd";
+      render({ scoreIn: true });
+      animateForgeScore();
+      return;
+    }
+    render();
+  },
+  toFeed() {
+    playTransition("feed", () => {
+      state.nodes = new Array(N_NODES).fill(0); syncNet();
+      state.deck = deal(level(), state.recent);
+      state.screen = "feed"; openPost(0); render({ top: true });
+    }, () => {   // the Expert countdown starts once the post is fully in view
+      if (state.screen === "feed" && !state.feed.verdict) { state.feed.t0 = Date.now(); armTimer(); renderTown(); }
+    });
+  },
+  check(v) {
+    const f = state.feed;
+    if (f.verdict || f.checks.includes(v) || f.checks.length >= level().checks) return;
+    f.checks.push(v); render();
+  },
+  verdict(v, timedOut) {
+    const f = state.feed, p = post();
+    if (f.verdict || state.screen !== "feed") return;
+    clearTimeout(timerId);
+    const [to, k, pts, ok] = RULES[p.truth][v];
+    // An ignored fake keeps spreading from somewhere else in town; everything else starts with you.
+    const from = p.truth === "fake" && v === "pass" ? NET.corners[f.i % NET.corners.length] : NET.you;
+    f.changed = k ? spread(to, k, from) : 0;
+    f.verdict = v; f.timedOut = !!timedOut; f.pts = pts;
+    const before = state.score;
+    state.score = Math.max(0, state.score + pts);
+    state.streak = ok === true ? state.streak + 1 : ok === false ? 0 : state.streak;
+    state.log.push({ id: p.id, verdict: v, ok, trick: null });
+    render({ freshStamp: true, top: true });
+    feedback(fbKind(ok, pts, timedOut), before, state.score);
+  },
+  guess(v) {
+    const f = state.feed, p = post();
+    if (f.guess !== null) return;
+    f.guess = v;
+    const hit = p.tricks.includes(v);
+    state.log[state.log.length - 1].trick = hit;
+    const before = state.score;
+    if (hit) state.score += TRICK_BONUS;
+    render();
+    sfx(hit ? "bonus" : "none");
+    bumpScore(before, state.score);
+  },
+  next() {
+    const i = state.feed.i + 1;
+    if (i >= state.deck.length) return playTransition("result", () => { state.screen = "result"; render({ top: true }); });
+    openPost(i);
+    render({ top: true });
+  },
+  replay() { goHome(); },
+  home() {
+    if (state.screen === "intro") return;
+    if (state.screen === "result" || state.screen === "pickStory") return goHome();   // nothing to lose yet, or the game is over
+    quitOpen = true; pausedAt = Date.now(); clearTimeout(timerId);   // pause the Expert countdown
+    renderModal();
+  },
+  quitYes() { goHome(); },
+  quitNo() {
+    if (!quitOpen) return;
+    quitOpen = false;
+    if (state.screen === "feed" && !state.feed.verdict) state.feed.t0 += Date.now() - pausedAt;   // resume where it stopped
+    renderModal(); render(); armTimer();
+    document.querySelector(".homebtn")?.focus();
+  },
+};
+
+document.addEventListener("keydown", e => {
+  if (fx && ["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); endFx(); return; }
+  if (quitOpen && e.key === "Escape") ACTIONS.quitNo();
+});
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (fx || !el || el.disabled || !ACTIONS[el.dataset.act]) return;   // nothing behind a transition is clickable
+  if (quitOpen && !["quitYes", "quitNo"].includes(el.dataset.act)) return;   // the dialog blocks the game behind it
+  ACTIONS[el.dataset.act](el.dataset.v);
+});
+
+/* Boot. Inside the Claude viewer, `hot` keeps a player's place across a republish. */
+function boot(saved) {
+  state = saved && saved.screen && Array.isArray(saved.deck) ? Object.assign(fresh(), saved) : fresh();
+  if (state.screen === "feed" && !state.feed.verdict) state.feed.t0 = Date.now();   // a restored timer starts over
+  syncNet();
+  render();
+  armTimer();
+  introWave();
+  window.claude?.hot?.snapshot?.(() => state);
+}
+if (window.claude?.hot?.ready) window.claude.hot.ready(boot); else boot(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
