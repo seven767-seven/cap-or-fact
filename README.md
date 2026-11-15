@@ -20,7 +20,7 @@ Seeing the tricks from the inside works like a vaccine ("prebunking"). In a Camb
 
 - Four difficulty levels (Easy, Normal, Hard, Expert with a 30-second timer) / 四档难度
 - Step-by-step first-round guide, switchable from the top-right button / 新手引导
-- Scene transitions, per-screen colour themes, right/wrong feedback with sound / 转场、主题色、答题反馈与音效
+- Scene transitions (stamp and ink, ink drop and magnifier, magnifier pull-back, videotape rewind home), per-screen colour themes, right/wrong feedback with sound / 转场(盖章溅墨、墨滴放大镜、放大镜拉远、倒带回首页)、主题色、答题反馈与音效
 - Fully bilingual, works on desktop and phone / 中英双语,桌面和手机都能玩
 
 ## Code / 代码

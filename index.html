@@ -1236,6 +1236,7 @@ const UI = {
   replay:{en:"Play again", zh:"再玩一次"},
   home:{en:"Home", zh:"首页"},
   skipFx:{en:"Tap to skip", zh:"点击跳过"},
+  rewind:{en:"REWIND", zh:"倒带"}, play:{en:"PLAY", zh:"播放"},
   fxLabel:{en:"Scene transitions", zh:"转场动画"},
   sfxLabel:{en:"Sound effects", zh:"音效"},
   pickKicker:{en:"Act 1, choose a story", zh:"第一幕,选一个故事"},
@@ -1896,9 +1897,12 @@ function renderModal() {
     </div>` : "";
   if (quitOpen) document.getElementById("quitNo").focus();
 }
-function goHome() {
+/* Back to the home screen. With `animate`, the game rewinds like a videotape on the way. */
+function goHome(animate = true) {
   clearTimeout(timerId); quitOpen = false; renderModal();
-  state = fresh(state); syncNet(); render({ top: true }); introWave();
+  const reset = () => { state = fresh(state); syncNet(); render({ top: true }); };
+  if (animate) playTransition("home", reset, introWave);
+  else { reset(); introWave(); }
 }
 
 /* ---------- TRANSITIONS ----------
@@ -1911,6 +1915,7 @@ const FX = {
   forge:  { ms:1500, swap:0.55 },
   feed:   { ms:1650, swap:0.60 },
   result: { ms:1500, swap:0.52 },
+  home:   { ms:1500, swap:0.50 },
 };
 const INK = "#090B22";
 let fx = null;
@@ -1941,12 +1946,41 @@ function playTransition(kind, swap, done) {
          ph: [rnd() * 6.3, rnd() * 6.3, rnd() * 6.3],
          drops: Array.from({ length: 30 }, () => ({ a: rnd() * Math.PI * 2, d: 0.55 + rnd() * 0.75, s: 3 + rnd() * 15, e: 1 + rnd() * 1.4 })) };
   cv.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); endFx(); });
+  if (kind === "home") tapeGlitch("wind");
   requestAnimationFrame(fxFrame);
 }
-function doSwap() { if (fx && !fx.swapped) { fx.swapped = true; fx.swapFn(); } }
+function doSwap() {
+  if (!fx || fx.swapped) return;
+  fx.swapped = true; fx.swapFn();
+  if (fx.kind === "home") tapeGlitch("settle");
+}
+/* The rewind also moves the page itself: it judders and scrolls upward as the tape winds back,
+   then the home screen rolls in and settles. Skipped with "reduce motion" on, like the stamp shake. */
+let tapeAnim = null;
+function tapeGlitch(phase) {
+  const app = document.querySelector(".app");
+  if (!app || !app.animate || reduceMotion()) return;
+  if (tapeAnim) tapeAnim.cancel();
+  const ms = FX.home.ms;
+  tapeAnim = phase === "wind"
+    ? app.animate([
+        { transform: "none", filter: "none" },
+        { transform: "translate(-12px,-24px) skewX(4deg)", filter: "saturate(2) hue-rotate(-25deg) contrast(1.25)" },
+        { transform: "translate(10px,-70px) skewX(-6deg)", filter: "saturate(.5) contrast(1.6) blur(1px)" },
+        { transform: "translate(-7px,-130px) skewX(3deg)", filter: "hue-rotate(40deg) saturate(2.4)" },
+        { transform: "translate(0,-210px) scaleY(1.06)", filter: "brightness(1.7) blur(2px)" },
+      ], { duration: ms * FX.home.swap, easing: "ease-in", fill: "forwards" })
+    : app.animate([
+        { transform: "translate(0,46px) scaleY(1.05)", filter: "brightness(1.6) saturate(2) blur(1.5px)" },
+        { transform: "translate(-6px,-4px) skewX(-2deg)", filter: "saturate(1.4) contrast(1.15)" },
+        { transform: "translate(3px,0) skewX(1deg)", filter: "none" },
+        { transform: "none", filter: "none" },
+      ], { duration: ms * (1 - FX.home.swap) * 0.85, easing: "ease-out" });
+}
 function endFx() {
   if (!fx) return;
   doSwap();
+  if (fx.kind === "home" && tapeAnim) { tapeAnim.cancel(); tapeAnim = null; }
   fx.cv.remove();
   const done = fx.done; fx = null;
   done && done();
@@ -2027,6 +2061,24 @@ function lens(g, r, alpha = 1) {
   ctx.beginPath(); ctx.arc(cx, cy, r * 0.8, Math.PI * 1.08, Math.PI * 1.36); ctx.stroke();
   ctx.restore();
 }
+let noiseCv = null;
+function staticNoise(g, alpha) {
+  const { ctx, w, h } = g;
+  const nw = Math.ceil(w / 4), nh = Math.ceil(h / 4);
+  if (!noiseCv || noiseCv.width !== nw || noiseCv.height !== nh) { noiseCv = document.createElement("canvas"); noiseCv.width = nw; noiseCv.height = nh; }
+  const nctx = noiseCv.getContext("2d"), img = nctx.createImageData(nw, nh), d = img.data;
+  for (let i = 0; i < d.length; i += 4) { const v = Math.random() * 255; d[i] = v * 0.82; d[i + 1] = v * 0.86; d[i + 2] = v; d[i + 3] = 255; }
+  nctx.putImageData(img, 0, 0);
+  ctx.save(); ctx.globalAlpha = alpha; ctx.imageSmoothingEnabled = false; ctx.drawImage(noiseCv, 0, 0, w, h); ctx.restore();
+}
+function osd(g, text, alpha, big) {
+  const { ctx, w, h } = g;
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.font = `800 ${big}px ui-monospace, Menlo, Consolas, ${css("--body")}`; ctx.textBaseline = "top";
+  ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.fillText(text, 30, 30);
+  ctx.fillStyle = "#fff"; ctx.fillText(text, 27, 27);
+  ctx.restore();
+}
 const FX_DRAW = {
   forge(t, g) {
     const { ctx, w, h, cx, cy, R } = g, red = css("--fake"), sw = fx.swap;
@@ -2077,6 +2129,34 @@ const FX_DRAW = {
       const p = (t - sw) / (1 - sw), rs = m * 0.21;
       const r = p < 0.38 ? rs * easeBack(p / 0.38) : rs + (R * 1.15 - rs) * easeIn((p - 0.38) / 0.62);
       lens(g, Math.max(0, r));
+    }
+  },
+  home(t, g) {
+    const { ctx, w, h } = g, sw = fx.swap;
+    const before = t < sw, k = before ? t / sw : (t - sw) / (1 - sw);
+    const amount = before ? 0.25 + 0.75 * k : 1 - k;            // how strong the tape effect is right now
+    ctx.fillStyle = `rgba(20,26,90,${0.22 * amount})`; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = `rgba(0,0,0,${0.32 * amount})`;              // scanlines
+    for (let y = 0; y < h; y += 4) ctx.fillRect(0, y, w, 2);
+    for (let b = 0; b < 3; b++) {                                // tracking bars rolling up the screen
+      const bh = h * (0.05 + b * 0.03), speed = 2.2 + b * 1.3;
+      const y = h - (((t * speed) + b * 0.37) % 1) * (h + bh);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, y, w, bh); ctx.clip();
+      staticNoise(g, 0.55 * amount);
+      ctx.fillStyle = `rgba(255,255,255,${0.35 * amount})`; ctx.fillRect(0, y + bh * 0.45, w, 2);
+      ctx.restore();
+    }
+    const cut = clamp01(1 - Math.abs(t - sw) / 0.09);            // full static around the cut hides the swap
+    if (cut > 0) staticNoise(g, Math.min(1, cut * 1.6));
+    const blink = Math.floor(t * 8) % 2 === 0;
+    if (before) {
+      osd(g, `\u25C0\u25C0 ${L(UI.rewind)}`, blink ? 1 : 0.35, Math.max(18, Math.min(30, w / 28)));
+      const sec = Math.max(0, Math.round(5400 * (1 - k)));        // timecode racing back to zero
+      const tc = `${String(Math.floor(sec / 3600)).padStart(2, "0")}:${String(Math.floor(sec / 60) % 60).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+      ctx.save(); ctx.font = `700 16px ui-monospace, Menlo, Consolas, monospace`; ctx.textAlign = "right"; ctx.textBaseline = "top";
+      ctx.fillStyle = "#fff"; ctx.globalAlpha = 0.9; ctx.fillText(tc, w - 24, 30); ctx.restore();
+    } else if (k < 0.8) {
+      osd(g, `\u25B6 ${L(UI.play)}`, 1 - k / 0.8, Math.max(18, Math.min(30, w / 28)));
     }
   },
   result(t, g) {
@@ -2232,7 +2312,8 @@ const ACTIONS = {
   replay() { goHome(); },
   home() {
     if (state.screen === "intro") return;
-    if (state.screen === "result" || state.screen === "pickStory") return goHome();   // nothing to lose yet, or the game is over
+    if (state.screen === "pickStory") return goHome(false);   // nothing to lose yet: straight back
+    if (state.screen === "result") return goHome();           // the game is over: rewind home, no question
     quitOpen = true; pausedAt = Date.now(); clearTimeout(timerId);   // pause the Expert countdown
     renderModal();
   },
