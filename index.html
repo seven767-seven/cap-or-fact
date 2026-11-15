@@ -269,6 +269,19 @@ body.modal-open .timer i{animation-play-state:paused}
 .call small{font-size:12.5px;color:var(--muted);line-height:1.35}
 
 /* outcome */
+.realtag{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;background:var(--ink);color:#fff;border-radius:12px;padding:8px 12px;font-size:13px}
+.realtag b{display:inline-flex;align-items:center;gap:7px;font-size:13.5px}
+.realtag b::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fake-lit,#FF8571);box-shadow:0 0 0 3px rgba(255,133,113,.3)}
+.realtag span{color:#C9CEEA}
+.impact{background:var(--ink);color:#fff;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.impact.fresh{animation:barIn .5s .25s cubic-bezier(.2,1.2,.4,1) both}
+.impact-label{font-size:12.5px;font-weight:700;color:var(--marker)}
+.impact h3{font-size:30px;line-height:1}
+.impact ul{display:flex;flex-direction:column;gap:8px;padding-left:18px;list-style:disc}
+.impact li{font-size:14.5px;line-height:1.45;color:#E4E7FA}
+.impact-src{font-size:12.5px;color:#B9BEE6;border-top:1px solid rgba(255,255,255,.15);padding-top:8px}
+.impact-src a{color:#fff}
+.pill.real{background:var(--ink);color:#fff}
 .outcome{background:var(--tint);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;border-left:7px solid var(--line)}
 .outcome.good{border-left-color:var(--real)}
 .outcome.bad{border-left-color:var(--fake)}
@@ -1117,7 +1130,160 @@ const POSTS = [
     explain:{en:"True. A known local outlet, its own reporting, and family confirming in the replies.",
              zh:"是真的。知名的本地媒体、它自己的报道,还有家人在评论里证实。"} },
 ];
-const POST_BY_ID = Object.fromEntries(POSTS.map(p => [p.id, p]));
+/* Real cases from the internet. The last two posts of every feed are drawn from here.
+   Post text is paraphrased or translated from the original. Private individuals are not named.
+   After the player's call, `impact` shows what the post actually caused, with sources. */
+const REAL_CASES = [
+  { id:"ap2013", real:true, truth:"fake", level:3, tricks:[], art:null,
+    when:{en:"April 23, 2013 · Twitter", zh:"2013 年 4 月 23 日 · 推特"},
+    title:{en:"White House explosion tweet", zh:"“白宫爆炸”推文"},
+    author:{ name:{en:"The Associated Press", zh:"美联社"}, handle:"@AP", color:"#1A1A1A" },
+    time:{en:"1:07 p.m.", zh:"下午 1:07"}, likes:null, shares:"1,800+",
+    text:{en:"Breaking: Two explosions in the White House, and the president is injured.", zh:"突发:白宫发生两起爆炸,总统受伤。"},
+    tools:{
+      profile: { key:false, en:"The real, verified account of one of the world's biggest news agencies, with about 1.9 million followers. Nothing about it looks wrong.", zh:"全球最大通讯社之一的真实认证账号,约 190 万粉丝,看起来没有任何问题。" },
+      source:  { key:true,  en:"No details, no reporter's name, no link. That is unusual for this agency's breaking news.", zh:"没有任何细节、记者署名或链接。这对这家通讯社的突发新闻来说很反常。" },
+      image:   { key:false, en:"No image attached.", zh:"这条帖子没有图片。" },
+      date:    { key:false, en:"Posted minutes ago, on an ordinary weekday afternoon.", zh:"几分钟前发布,那是一个普通工作日的下午。" },
+      coverage:{ key:true,  en:"No other news outlet, TV channel or official account is reporting any explosion.", zh:"没有任何其他媒体、电视台或官方账号报道爆炸。" },
+      comments:{ key:true,  en:"The agency's other official accounts post a warning: the main account has been hacked.", zh:"这家通讯社的其他官方账号发出提醒:主账号被盗了。" },
+    },
+    explain:{en:"Fake. Hackers had taken over the real account, reportedly soon after staff received a disguised phishing email. Even a trusted, verified account can post something false, so check whether anyone else is reporting it.",
+             zh:"是假的。黑客盗用了这个真实账号,据报道就在员工收到伪装过的钓鱼邮件之后不久。即使是可信的认证账号也可能发出假消息,所以要看看有没有别人也在报道。"},
+    impact:{ head:{en:"About $136 billion wiped off the US stock market in minutes", zh:"几分钟内,美国股市市值蒸发约 1360 亿美元"},
+      points:[
+        {en:"Trading programs that scan headlines began selling within seconds. The Dow Jones index fell about 143 points.", zh:"扫描新闻标题的自动交易程序几秒内就开始抛售,道琼斯指数下跌约 143 点。"},
+        {en:"The S&P 500 briefly lost about $136 billion in value, then recovered once the post was exposed as fake.", zh:"标普 500 指数市值一度蒸发约 1360 亿美元,假消息被揭穿后才回升。"},
+        {en:"The White House said the president was fine. A group of hackers claimed responsibility.", zh:"白宫表示总统安然无恙,一个黑客组织声称对此负责。"} ],
+      sources:[ { t:"Reuters, via Daily Maverick", u:"https://www.dailymaverick.co.za/article/2013-04-24-hackers-send-fake-market-moving-ap-tweet-on-white-house-explosions/" },
+                { t:"MPR News", u:"https://www.mprnews.org/2013/04/23/news/hackers-compromise-ap-twitter-account" } ] } },
+
+  { id:"sandy2012", real:true, truth:"fake", level:2, tricks:[], art:null,
+    when:{en:"October 29, 2012 · Twitter · Hurricane Sandy", zh:"2012 年 10 月 29 日 · 推特 · 飓风“桑迪”"},
+    title:{en:"Stock exchange under water", zh:"“纽约证交所被淹”"},
+    author:{ name:{en:"An anonymous account", zh:"一个匿名账号"}, handle:{en:"about 6,000 followers", zh:"约 6000 粉丝"}, color:"#4A5568" },
+    time:{en:"around 8 p.m., during the storm", zh:"晚上 8 点左右,风暴正猛"}, likes:null, shares:"600+",
+    text:{en:"BREAKING: Confirmed flooding at the New York Stock Exchange. The trading floor is under more than 3 feet of water.", zh:"突发:已确认纽约证券交易所被淹,交易大厅积水超过 3 英尺(约 1 米)。"},
+    tools:{
+      profile: { key:true,  en:"Anonymous, about 6,000 followers. It posted several other dramatic “BREAKING” claims the same night.", zh:"匿名账号,约 6000 粉丝。同一晚还发了好几条耸人听闻的“突发”消息。" },
+      source:  { key:true,  en:"It says “confirmed,” but never says who confirmed it.", zh:"它说“已确认”,却从没说是谁确认的。" },
+      image:   { key:false, en:"No image attached.", zh:"这条帖子没有图片。" },
+      date:    { key:false, en:"Posted at the height of the storm, when rumours were everywhere.", zh:"发布于风暴最猛烈的时候,当时到处都是传言。" },
+      coverage:{ key:true,  en:"A TV channel repeats the claim, but it is quoting posts, not its own reporters. The exchange later shares a photo of its dry trading floor.", zh:"有电视台在转述这个说法,但引用的是网上的帖子,不是自己的记者。交易所随后发出了交易大厅干燥如常的照片。" },
+      comments:{ key:false, en:"People nearby post photos of the building. From outside, it looks dry.", zh:"附近的人发了大楼的照片,从外面看是干的。" },
+    },
+    explain:{en:"Fake. One anonymous account posted it, and the word “confirmed” did a lot of the work. When big TV channels repeated it without checking, it looked even more real.",
+             zh:"是假的。只有一个匿名账号这么说,“已确认”三个字起了很大作用。大电视台没核实就跟着报道,让它显得更真了。"},
+    impact:{ head:{en:"A false tweet ended up on national TV", zh:"一条假推文上了全国电视"},
+      points:[
+        {en:"It was retweeted more than 600 times while millions of people were following the storm on their phones.", zh:"在数百万人用手机追踪风暴的时候,它被转发了 600 多次。"},
+        {en:"CNN and The Weather Channel reported it before the exchange denied it.", zh:"在交易所辟谣之前,CNN 和天气频道都报道了这条消息。"},
+        {en:"The man behind the account was identified, apologised, and resigned from his job on a political campaign.", zh:"账号背后的人被查出,公开道歉,并辞去了在一个竞选团队的工作。"} ],
+      sources:[ { t:"Pew Research Center", u:"https://www.pewresearch.org/journalism/2012/11/06/hurricane-sandy-and-twitter/" },
+                { t:"CBS News", u:"https://www.cbsnews.com/news/twitter-user-comfortablysmug-apologizes-for-sandy-hoax" } ] } },
+
+  { id:"fiveg2020", real:true, truth:"fake", level:1, tricks:[], art:"mast",
+    when:{en:"Spring 2020 · shared on many platforms", zh:"2020 年春 · 在多个平台广泛流传"},
+    title:{en:"5G spreads the virus", zh:"“5G 传播病毒”"},
+    author:{ name:{en:"A widely shared post", zh:"一条广为流传的帖子"}, handle:{en:"copied by many accounts", zh:"被大量账号复制转发"}, color:"#5B4B8A" },
+    time:{en:"April 2020", zh:"2020 年 4 月"}, likes:null, shares:null,
+    text:{en:"Notice how the virus hit hardest where the new 5G masts went up? 5G radiation weakens your immune system. They will never admit it. Share before this gets taken down!",
+          zh:"你有没有发现,疫情最严重的地方正是刚装了 5G 基站的地方?5G 辐射会削弱免疫力。他们永远不会承认。趁还没被删,赶紧转!"},
+    tools:{
+      profile: { key:false, en:"Countless copies from different accounts. The original author can't be found.", zh:"无数账号在发几乎一样的内容,原作者已经无从查找。" },
+      source:  { key:true,  en:"No study is named. Scientists explain that radio waves cannot carry or spread a virus.", zh:"没有提到任何研究。科学家解释说,无线电波不可能携带或传播病毒。" },
+      image:   { key:false, en:"An ordinary photo of a phone mast, used on many websites.", zh:"一张普通的通信基站照片,很多网站都在用。" },
+      date:    { key:false, en:"Shared during the first lockdowns, when people were scared and stuck at home.", zh:"在第一次封城期间流传,当时大家既害怕又被困在家里。" },
+      coverage:{ key:true,  en:"The World Health Organization and fact-checkers call it false. The virus also spread widely in places with no 5G at all.", zh:"世界卫生组织和事实核查机构都说这是假的。病毒在完全没有 5G 的地方同样大范围传播。" },
+      comments:{ key:false, en:"Many replies agree. A few engineers explain how phone signals work and get shouted down.", zh:"很多回复表示认同。几个工程师解释手机信号的原理,却被骂了回去。" },
+    },
+    explain:{en:"Fake. Two things happening at the same time doesn't prove one caused the other. The virus spreads from person to person, not over radio signals.",
+             zh:"是假的。两件事同时发生,不能证明是其中一件造成了另一件。病毒是在人与人之间传播的,不是通过无线电信号。"},
+    impact:{ head:{en:"Phone masts set on fire across the UK", zh:"英国各地的通信基站被纵火"},
+      points:[
+        {en:"In April and May 2020, people inspired by the theory set fire to more than 70 mobile phone masts in the UK.", zh:"2020 年 4 月到 5 月,受这个说法煽动的人在英国烧毁了 70 多座手机基站。"},
+        {en:"Many of the masts attacked did not even carry 5G.", zh:"被烧的基站里,很多根本就没有 5G 设备。"},
+        {en:"Telecom engineers were harassed while keeping networks running that people relied on during lockdown.", zh:"在封城期间维护大家赖以联络的网络时,电信工程师还遭到了骚扰。"} ],
+      sources:[ { t:"CNBC", u:"https://www.cnbc.com/2020/04/06/coronavirus-uk-cell-towers-set-on-fire-amid-5g-conspiracy-theories.html" },
+                { t:"Business Insider, via Yahoo News", u:"https://news.yahoo.com/77-cell-phone-towers-set-142622729.html" } ] } },
+
+  { id:"tp2020", real:true, truth:"fake", level:2, tricks:[], art:"shelves",
+    when:{en:"February 2020 · Hong Kong · group chats", zh:"2020 年 2 月 · 香港 · 群聊"},
+    title:{en:"Toilet paper will run out", zh:"“厕纸要断货”"},
+    author:{ name:{en:"A forwarded message", zh:"一条转发消息"}, handle:{en:"“from a reliable source”", zh:"“消息绝对可靠”"}, color:"#A0522D" },
+    time:{en:"February 5, 2020", zh:"2020 年 2 月 5 日"}, likes:null, shares:null,
+    text:{en:"From a reliable source: toilet paper production is about to stop because the factories on the mainland are closed. Shops will be empty soon. Stock up NOW!",
+          zh:"可靠消息:内地工厂停工,厕纸马上要停产了,很快就会断货。赶紧去囤!"},
+    tools:{
+      profile: { key:true,  en:"No name and no account history. It spread through group chats as a forwarded message.", zh:"没有名字,也没有账号历史。它是在群聊里一层层转发出来的。" },
+      source:  { key:true,  en:"It never says who the “reliable source” is.", zh:"从头到尾没说“可靠消息”到底是谁。" },
+      image:   { key:false, en:"No image attached.", zh:"这条消息没有图片。" },
+      date:    { key:false, en:"Sent early in the outbreak, when people were already anxious.", zh:"发于疫情初期,当时大家已经很焦虑了。" },
+      coverage:{ key:true,  en:"The government condemns the rumour, and supermarket chains say they have plenty of stock.", zh:"政府公开谴责这个谣言,连锁超市也表示货源充足。" },
+      comments:{ key:false, en:"Replies share photos of empty shelves as “proof.”", zh:"回复里大家纷纷晒出空货架的照片当作“证据”。" },
+    },
+    explain:{en:"Fake, but it made itself come true. Panic buying emptied the shelves, and the empty shelves made the rumour look real.",
+             zh:"是假的,但它让自己“成真”了。恐慌性抢购把货架买空,空货架又让谣言看起来像真的。"},
+    impact:{ head:{en:"Empty shelves, and a robbery for toilet paper", zh:"货架被抢空,还发生了抢劫厕纸的案件"},
+      points:[
+        {en:"Shoppers rushed to stock up, so supermarkets really did run short for a while, even though supply was fine.", zh:"大家一窝蜂去囤货,超市一度真的缺货,尽管供应其实没问题。"},
+        {en:"Photos of empty shelves spread online and convinced even more people.", zh:"空货架的照片在网上疯传,说服了更多人。"},
+        {en:"On February 17, three men, one with a knife, stole 600 rolls from a delivery worker outside a supermarket. Police arrested two suspects.", zh:"2 月 17 日,三名男子(其中一人持刀)在一家超市门外从送货员手里抢走了 600 卷厕纸,警方逮捕了两名疑犯。"} ],
+      sources:[ { t:"Radio Free Asia", u:"https://www.rfa.org/english/news/china/shortages-02202020115500.html" },
+                { t:"VICE", u:"https://www.vice.com/en/article/armed-robbers-steal-600-rolls-toilet-paper-hong-kong-coronavirus/" } ] } },
+
+  { id:"icebucket2014", real:true, truth:"real", level:3, tricks:[], art:"bucket",
+    when:{en:"Summer 2014 · Facebook, Instagram, YouTube", zh:"2014 年夏 · Facebook、Instagram、YouTube"},
+    title:{en:"The Ice Bucket Challenge", zh:"冰桶挑战"},
+    author:{ name:{en:"A friend's video post", zh:"朋友发的视频"}, handle:{en:"one of millions like it", zh:"数以百万计的同类帖子之一"}, color:"#1F6FB5" },
+    time:{en:"August 2014", zh:"2014 年 8 月"}, likes:null, shares:null,
+    text:{en:"I got nominated! 🧊 Pour a bucket of ice water over your head or donate to ALS research, then nominate 3 friends. You have 24 hours!",
+          zh:"我被点名了!🧊 往头上浇一桶冰水,或者为渐冻症(ALS)研究捐款,然后点名 3 个朋友。限时 24 小时!"},
+    tools:{
+      profile: { key:false, en:"A real person you know. Thousands of celebrities are posting the same thing.", zh:"一个你认识的真人。成千上万的名人也在发同样的内容。" },
+      source:  { key:true,  en:"The ALS Association, a long-running charity, confirms the challenge and takes donations on its own website.", zh:"历史悠久的慈善机构 ALS 协会证实了这个挑战,并在自己的官网上接受捐款。" },
+      image:   { key:false, en:"The video shows your friend in their own backyard.", zh:"视频里就是你朋友,在自家后院拍的。" },
+      date:    { key:false, en:"Posted this week. The challenge is everywhere right now.", zh:"本周发布,现在这个挑战到处都是。" },
+      coverage:{ key:true,  en:"Major news outlets report on the challenge and the money it is raising.", zh:"各大媒体都在报道这个挑战以及它筹到的钱。" },
+      comments:{ key:false, en:"Friends reply with their own videos and screenshots of donations.", zh:"朋友们回复了自己的视频和捐款截图。" },
+    },
+    explain:{en:"True. It has a deadline and a “nominate 3 friends” chain, just like a hoax. But the charity is real, and you can donate on its own website instead of through a link in a post.",
+             zh:"是真的。它有时间限制,还要“点名 3 个朋友”,看起来和谣言一模一样。但这家慈善机构是真的,你也可以直接在它的官网捐款,而不是点帖子里的链接。"},
+    impact:{ head:{en:"$115 million raised in eight weeks, and a new gene found", zh:"八周筹到 1.15 亿美元,还帮助发现了一个新基因"},
+      points:[
+        {en:"About 17 million people posted videos, and the ALS Association received $115 million in eight weeks.", zh:"大约 1700 万人发了挑战视频,ALS 协会在八周内收到 1.15 亿美元捐款。"},
+        {en:"$77 million of it went to research.", zh:"其中 7700 万美元用于科研。"},
+        {en:"Part of the money funded Project MinE, which in 2016 identified NEK1, a gene linked to ALS, giving scientists a new target for treatment.", zh:"部分资金支持了 MinE 项目。该项目在 2016 年发现了与渐冻症有关的基因 NEK1,为治疗研究提供了新方向。"} ],
+      sources:[ { t:"TIME", u:"https://time.com/4426072/ice-bucket-challenge-als-discovery" },
+                { t:"WTOP / AP", u:"https://wtop.com/news/2016/07/ice-bucket-challenge-helps-identify-als-gene" } ] } },
+
+  { id:"boaty2016", real:true, truth:"real", level:3, tricks:[], art:"ship",
+    when:{en:"April 2016 · United Kingdom", zh:"2016 年 4 月 · 英国"},
+    title:{en:"Boaty McBoatface", zh:"“船船麦船脸”"},
+    author:{ name:{en:"A friend's post", zh:"朋友的帖子"}, handle:{en:"links to the official poll", zh:"附上了官方投票页面"}, color:"#E07A1F" },
+    time:{en:"April 2016", zh:"2016 年 4 月"}, likes:null, shares:null,
+    text:{en:"The UK government let the internet vote on a name for its new £200 million polar research ship. Winning by miles: BOATY McBOATFACE 🚢😂",
+          zh:"英国政府让网友投票,给一艘 2 亿英镑的新极地科考船起名。遥遥领先的是:“船船麦船脸”(Boaty McBoatface)🚢😂"},
+    tools:{
+      profile: { key:false, en:"Your friend usually posts jokes and funny news.", zh:"你这位朋友平时爱发段子和搞笑新闻。" },
+      source:  { key:true,  en:"The research council's official poll page shows Boaty McBoatface in first place with 124,109 votes.", zh:"英国自然环境研究委员会的官方投票页面显示,“船船麦船脸”以 124,109 票排名第一。" },
+      image:   { key:false, en:"A computer drawing of the ship, from the official announcement.", zh:"一张船的电脑效果图,出自官方公告。" },
+      date:    { key:false, en:"Posted the week the poll closed.", zh:"发布于投票结束的那一周。" },
+      coverage:{ key:true,  en:"The BBC and newspapers around the world report the result.", zh:"BBC 和世界各地的报纸都报道了投票结果。" },
+      comments:{ key:false, en:"People argue about whether the government will really use the name.", zh:"大家在争论政府会不会真的用这个名字。" },
+    },
+    explain:{en:"True, even though it sounds made up. The official poll really happened. The government gave the ship a different name, but kept Boaty for something else.",
+             zh:"是真的,虽然听起来像编的。官方投票真的发生过。政府最后给船换了名字,但“船船麦船脸”这个名字也留了下来。"},
+    impact:{ head:{en:"The internet won, sort of", zh:"网友赢了,算是吧"},
+      points:[
+        {en:"Boaty McBoatface got 124,109 votes, more than three times the runner-up.", zh:"“船船麦船脸”获得 124,109 票,是第二名的三倍多。"},
+        {en:"The government named the ship RRS Sir David Attenborough instead, a name that got about 10,000 votes.", zh:"政府最终把船命名为“大卫·爱登堡爵士号”,这个名字只得到了约 1 万票。"},
+        {en:"As a compromise, Boaty McBoatface became the name of a yellow robot submarine that collects data in the deep polar seas.", zh:"作为折中,“船船麦船脸”成了一艘黄色无人潜航器的名字,在极地深海收集数据。"} ],
+      sources:[ { t:"NPR", u:"https://www.npr.org/sections/thetwo-way/2016/05/06/477010650/boaty-by-another-name-sir-david-attenborough-is-chosen-for-british-research-ship" },
+                { t:"GOV.UK", u:"https://www.gov.uk/government/news/uks-200-million-polar-research-ship-named-in-honour-of-sir-david-attenborough" } ] } },
+];
+const REAL_PER_GAME = 2;
+const POST_BY_ID = Object.fromEntries([...POSTS, ...REAL_CASES].map(p => [p.id, p]));
 
 const TOOLS = [
   { id:"profile",  name:{en:"Profile", zh:"查账号"}, hint:{en:"Who posted it", zh:"发帖的是谁"},        icon:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>' },
@@ -1141,6 +1307,11 @@ const UI = {
   tabs:{ compose:{en:"New post", zh:"发帖"}, posted:{en:"Posted", zh:"已发布"}, feed:{en:"For you", zh:"推荐"}, report:{en:"Your report", zh:"你的战报"} },
   you:{en:"You", zh:"你"},
   stats:{en:"{likes} likes, {shares} shares", zh:"{likes} 赞,{shares} 转发"},
+  statsShares:{en:"{shares} shares", zh:"{shares} 次转发"},
+  realTag:{en:"From the real internet", zh:"来自真实网络"},
+  realKicker:{en:"real case", zh:"真实案例"},
+  impactTitle:{en:"What it really caused", zh:"真实影响"},
+  impactSources:{en:"Sources", zh:"来源"},
   score:{en:"Score", zh:"得分"},
   title:{ en:[["Cap","fake"],["Fact?","real"]], zh:[["真的","real"],["假的?","fake"]] },   // [word, stamp colour]
   titleOr:{en:"or", zh:""},
@@ -1154,7 +1325,7 @@ const UI = {
   statCite:{en:"Vosoughi, Roy & Aral, Science, 2018", zh:"Vosoughi, Roy & Aral,《科学》,2018"},
   acts:[
     { h:{en:"Forge", zh:"造假"}, p:{en:"Pick one of {s} true stories, build a fake post out of it, and watch how far it travels.", zh:"从 {s} 个真实故事里挑一个,把它拼成一条假帖子,看它能传多远。"} },
-    { h:{en:"Scroll", zh:"刷帖"}, p:{en:"Posts land in your feed, drawn at random from {n} each game. Some are true. You decide which is which.", zh:"每局从 {n} 条帖子里随机抽取,有真有假,由你来判断。"} },
+    { h:{en:"Scroll", zh:"刷帖"}, p:{en:"Posts land in your feed, drawn at random from {n} each game. Some are true. You decide which is which. The last two are real posts from the internet.", zh:"每局从 {n} 条帖子里随机抽取,有真有假,由你来判断。最后两条是网络上真实出现过的帖子。"} },
     { h:{en:"Investigate", zh:"查证"}, p:{en:"Six tools, and only a few checks per post. Choose them well.", zh:"六种查证工具,但每条帖子只能用几次。选对了才看得清。"} },
   ],
   stepOf:{en:"Act 1, step {a} of {b}", zh:"第一幕,第 {a} 步(共 {b} 步)"},
@@ -1329,6 +1500,10 @@ const ART = {
   coyote:'<rect width="320" height="150" fill="#3B4A3A"/><rect y="104" width="320" height="46" fill="#2C3A2B"/><g fill="#9DA897"><path d="M110 92c10-14 40-18 70-12 14 2 22-6 30-14l8-14 6 16c4 6 4 14-2 20l-12 6v34h-8v-28c-14 4-34 4-50 0v28h-8v-32c-16 8-30 14-44 10 12-2 18-6 10-14z"/></g><path d="M216 52l-6-14 12 10z" fill="#9DA897"/><circle cx="222" cy="64" r="2" fill="#12141A"/><rect x="10" y="10" width="300" height="130" fill="none" stroke="#fff" stroke-width="1.5" opacity=".35"/><text x="18" y="26" font-family="monospace" font-size="11" fill="#fff" opacity=".8">CAM 03  06:04 AM</text>',
   blurshape:'<defs><filter id="blurshape-f"><feGaussianBlur stdDeviation="7"/></filter></defs><rect width="320" height="150" fill="#1E2A2E"/><rect y="96" width="320" height="54" fill="#22372B"/><g filter="url(#blurshape-f)"><ellipse cx="170" cy="100" rx="44" ry="20" fill="#0A0E10"/><circle cx="214" cy="86" r="14" fill="#0A0E10"/></g><circle cx="40" cy="30" r="3" fill="#fff" opacity=".6"/>',
   wolves:'<rect width="320" height="150" fill="#A9BACB"/><path d="M0 92l60-40 50 30 60-46 70 50 80-36v100H0z" fill="#7E93A8"/><rect y="104" width="320" height="46" fill="#E9EEF3"/>' + [[60,108,1],[130,100,1.2],[210,110,1],[262,104,.9]].map(([x,y,s])=>`<g transform="translate(${x} ${y}) scale(${s})" fill="#4A4F5A"><path d="M-30 0c6-10 30-12 48-6l10-12 4 10c4 4 2 10-2 14l-8 4v18h-6v-14c-12 2-24 2-34 0v14h-6v-18c-8 2-14 0-16-4z"/><path d="M28-18l-2-10 6 8z"/></g>`).join(""),
+  mast:'<rect width="320" height="150" fill="#C9D3E3"/><rect y="118" width="320" height="32" fill="#8E9AAE"/><path d="M160 18l-26 112h52z" fill="none" stroke="#565C80" stroke-width="5"/><path d="M146 66h28M140 92h40M152 42h16" stroke="#565C80" stroke-width="4"/><g fill="#2B3A55"><rect x="124" y="30" width="12" height="26" rx="2"/><rect x="184" y="30" width="12" height="26" rx="2"/></g><g fill="none" stroke="#7C89F4" stroke-width="3" stroke-linecap="round"><path d="M112 34a24 24 0 0 0 0 20M100 26a38 38 0 0 0 0 36M208 34a24 24 0 0 1 0 20M220 26a38 38 0 0 1 0 36"/></g>',
+  shelves:'<rect width="320" height="150" fill="#EDE6D8"/><rect x="30" y="16" width="260" height="124" fill="#D9CDB8"/><g fill="#B8A88E"><rect x="30" y="52" width="260" height="6"/><rect x="30" y="92" width="260" height="6"/><rect x="30" y="132" width="260" height="8"/></g><g fill="#fff" stroke="#C5CBD6" stroke-width="2"><circle cx="64" cy="40" r="11"/><circle cx="252" cy="120" r="11"/></g><g fill="#C5CBD6"><circle cx="64" cy="40" r="4"/><circle cx="252" cy="120" r="4"/></g><rect x="120" y="66" width="80" height="20" rx="3" fill="#D93A27"/><text x="160" y="80" font-family="sans-serif" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">SOLD OUT</text>',
+  bucket:'<rect width="320" height="150" fill="#BFE0F2"/><rect y="112" width="320" height="38" fill="#7FBF6A"/><path d="M128 20h64l-8 48h-48z" fill="#9AA2B1"/><path d="M128 20h64" stroke="#565C80" stroke-width="4"/><path d="M126 18c10-14 58-14 68 0" fill="none" stroke="#565C80" stroke-width="3"/><g fill="#E8F6FF" opacity=".9"><path d="M140 70c-4 14-10 24-18 34M160 70v40M180 70c4 14 10 24 18 34" stroke="#E8F6FF" stroke-width="7" stroke-linecap="round" fill="none"/><rect x="142" y="66" width="10" height="10" transform="rotate(20 147 71)"/><rect x="170" y="74" width="9" height="9" transform="rotate(-15 174 78)"/></g><circle cx="160" cy="118" r="18" fill="#E3B9A0"/><path d="M128 150c0-20 14-28 32-28s32 8 32 28z" fill="#D93A27"/>',
+  ship:'<rect width="320" height="150" fill="#DDEAF5"/><path d="M0 108h320v42H0z" fill="#2E5E8E"/><g fill="#fff"><path d="M24 60l30 6-6 10z"/><path d="M262 54l34-4-8 12z"/></g><path d="M70 92h190l-18 26H88z" fill="#D93A27"/><rect x="110" y="66" width="96" height="26" fill="#fff"/><rect x="176" y="46" width="22" height="20" fill="#fff"/><g fill="#2E5E8E"><rect x="120" y="74" width="12" height="8"/><rect x="140" y="74" width="12" height="8"/><rect x="160" y="74" width="12" height="8"/></g><path d="M226 112c8-6 20-6 26 0l-4 8h-18z" fill="#FFD93B"/><path d="M0 116q20-6 40 0t40 0 40 0 40 0 40 0 40 0 40 0 40 0" fill="none" stroke="#DCE8F7" stroke-width="2"/>',
 };
 const art = k => k && ART[k] ? `<svg class="art" viewBox="0 0 320 150" aria-hidden="true">${ART[k]}</svg>` : "";
 
@@ -1494,10 +1669,14 @@ function drawPosts(pool, n, weight) {
 function deal(lv, recent = []) {
   const w = LEVEL_WEIGHTS[lv.prefer], seen = new Set(recent);
   const weight = p => w[p.level] * (seen.has(p.id) ? RECENT_WEIGHT : 1);
+  const real = drawPosts(REAL_CASES, REAL_PER_GAME, p => seen.has(p.id) ? RECENT_WEIGHT : 1);
+  const realFakes = real.filter(p => p.truth === "fake").length;
+  const fakeN = Math.max(0, lv.posts - lv.reals - realFakes), trueN = Math.max(0, lv.reals - (real.length - realFakes));
   const take = (truth, n) => drawPosts(POSTS.filter(p => p.truth === truth), n, weight);
-  return shuffle([...take("fake", lv.posts - lv.reals), ...take("real", lv.reals)]).map(p => p.id);
+  return [...shuffle([...take("fake", fakeN), ...take("real", trueN)]), ...shuffle(real)].map(p => p.id);
 }
-const maxScore = () => state.deck.reduce((s, id) => s + (POST_BY_ID[id].truth === "fake" ? RULES.fake.flag[2] + TRICK_BONUS : RULES.real.share[2]), 0);
+const maxScore = () => state.deck.reduce((s, id) => { const p = POST_BY_ID[id];
+  return s + (p.truth === "fake" ? RULES.fake.flag[2] + (p.tricks.length ? TRICK_BONUS : 0) : RULES.real.share[2]); }, 0);
 
 let timerId = 0;
 function armTimer() {
@@ -1590,13 +1769,14 @@ function mountGuide(st) {
 function postHTML({ author, time, text, artKey, likes, shares, stamp, freshStamp }) {
   return `<article class="post">
     <header><span class="av" style="--c:${author.color}">${L(author.name).trim()[0].toUpperCase()}</span>
-      <span class="who"><b>${L(author.name)}</b><span class="handle">${author.handle}, ${L(time)}</span></span></header>
+      <span class="who"><b>${L(author.name)}</b><span class="handle">${typeof author.handle === "string" ? author.handle : L(author.handle)}, ${L(time)}</span></span></header>
     <p class="ptext">${L(text)}</p>
     ${art(artKey)}
-    <p class="pstats">${fill(L(UI.stats), { likes, shares })}</p>
+    ${likes ? `<p class="pstats">${fill(L(UI.stats), { likes, shares })}</p>` : shares ? `<p class="pstats">${fill(L(UI.statsShares), { shares })}</p>` : ""}
     ${stamp ? `<span class="stamp disp ${stamp === "real" ? "real" : ""} ${freshStamp ? "fresh" : ""}">${L(stamp === "real" ? UI.stampReal : UI.stampFake)}</span>` : ""}
   </article>`;
 }
+const realTag = p => p.real ? `<div class="realtag"><b>${L(UI.realTag)}</b><span>${L(p.when)}</span></div>` : "";
 const feedPost = (p, extra = {}) => postHTML({ author: p.author, time: p.time, text: p.text, artKey: p.art, likes: p.likes, shares: p.shares, ...extra });
 
 const phone = (tab, inner) => `<section class="phone">
@@ -1746,7 +1926,7 @@ function evidence(p, id, hints) {
 
 function viewFeed(freshStamp) {
   const f = state.feed, p = post(), lv = level(), done = !!f.verdict, left = lv.checks - f.checks.length;
-  const kicker = fill(L(UI.postOf), { a: f.i + 1, b: state.deck.length, level: L(lv.name) });
+  const kicker = fill(L(UI.postOf), { a: f.i + 1, b: state.deck.length, level: L(lv.name) }) + (p.real ? ` \u00B7 ${L(UI.realKicker)}` : "");
 
   if (!done) {
     const pts = n => (n > 0 ? "+" : "\u2212") + Math.abs(n);
@@ -1754,6 +1934,7 @@ function viewFeed(freshStamp) {
     return `<div class="brief"><span class="kicker">${kicker}</span><h2 class="h2 disp">${L(UI.prompt)}</h2></div>
     ${f.i === 0 && !state.guide.on ? `<aside class="truth"><b>${L(UI.howTitle)}</b>${L(UI.howBody)}</aside>` : ""}
     ${phone(UI.tabs.feed, `
+      ${realTag(p)}
       ${feedPost(p)}
       <div class="tray">
         <div class="trayhead"><span class="sub step">${fill(L(UI.toolsTitle), { n: lv.checks, t: TOOLS.length })}</span>
@@ -1781,9 +1962,16 @@ function viewFeed(freshStamp) {
       <span class="vb-text"><b>${L(UI.fb[kind])}</b>${kind === "good" && state.streak >= 2 ? `<small>${fill(L(UI.streak), { n: state.streak })}</small>` : ""}</span>
       <span class="vb-pts">${fill(L(UI.fbPts), { p: signed(f.pts) })}</span>
     </div>
+    ${realTag(p)}
     ${feedPost(p, { stamp: p.truth, freshStamp })}
-    <div class="outcome ${cls}"><p>${L(p.explain)}</p><p class="cons">${cons}</p></div>`;
-  if (p.truth === "fake" && f.verdict === "flag") {
+    <div class="outcome ${cls}"><p>${L(p.explain)}</p><p class="cons">${cons}</p></div>
+    ${p.impact ? `<section class="impact ${freshStamp ? "fresh" : ""}">
+      <span class="impact-label">${L(UI.impactTitle)} \u00B7 ${L(p.when)}</span>
+      <h3 class="disp">${L(p.impact.head)}</h3>
+      <ul>${p.impact.points.map(x => `<li>${L(x)}</li>`).join("")}</ul>
+      <p class="impact-src">${L(UI.impactSources)}: ${p.impact.sources.map(x => `<a href="${x.u}" target="_blank" rel="noopener">${x.t}</a>`).join(" \u00B7 ")}</p>
+    </section>` : ""}`;
+  if (p.truth === "fake" && f.verdict === "flag" && p.tricks.length) {
     const answered = f.guess !== null, hit = answered && p.tricks.includes(f.guess);
     inner += `<div class="block"><span class="sub">${L(UI.trickQ)}</span>
       <div class="chips">${f.choices.map(id => {
@@ -1801,7 +1989,7 @@ function viewFeed(freshStamp) {
 function viewResult() {
   const right = state.log.filter(e => e.ok === true).length;
   const named = state.log.filter(e => e.trick === true).length;
-  const fakes = state.deck.filter(id => POST_BY_ID[id].truth === "fake").length;
+  const fakes = state.deck.filter(id => POST_BY_ID[id].truth === "fake" && POST_BY_ID[id].tricks.length).length;
   const max = maxScore(), share = max ? state.score / max : 0;
   const rank = UI.ranks[share >= 0.75 ? 2 : share >= 0.45 ? 1 : 0];
   return `<div class="brief"><span class="kicker">${fill(L(UI.finalScore), { level: L(level().name), n: num(state.score), max: num(max) })}</span><h2 class="h2 disp">${L(rank)}</h2></div>
@@ -1814,7 +2002,7 @@ function viewResult() {
     </div>
     <div class="block"><span class="sub">${L(UI.recapTitle)}</span>
       <ul class="recap">${state.log.map(e => { const p = POST_BY_ID[e.id];
-        return `<li><span class="t">${L(p.title)}</span><span class="pill">${L(UI.was[p.truth])}</span><span class="pill ${e.ok === true ? "good" : e.ok === false ? "bad" : ""}">${L(UI.did[e.verdict])}</span></li>`; }).join("")}</ul>
+        return `<li><span class="t">${L(p.title)}${p.real ? ` <span class="pill real">${L(UI.realKicker)}</span>` : ""}</span><span class="pill">${L(UI.was[p.truth])}</span><span class="pill ${e.ok === true ? "good" : e.ok === false ? "bad" : ""}">${L(UI.did[e.verdict])}</span></li>`; }).join("")}</ul>
     </div>
     <div class="block"><span class="sub">${L(UI.siftTitle)}</span>
       <ul class="sift">${UI.sift.map(s => `<li><span class="l disp">${s.l}</span><span>${L(s.t)}</span></li>`).join("")}</ul>

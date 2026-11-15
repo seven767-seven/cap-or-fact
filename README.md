@@ -11,7 +11,7 @@ A bilingual (English / 中文) media literacy game for ages 12 to 17.
 Fake it first, then catch it. 先造假,再打假。
 
 1. **Forge (造假)** — Pick one of 5 true, boring stories from the town of Maple Ridge and twist it into a viral post over 8 steps, choosing honest, mild or full versions of 8 common tricks. A town map shows the post spreading, and you get a forger score out of 100.
-2. **Feed (信息流)** — Switch sides. Posts drawn at random from a pool of 30 land in your feed. Use a limited number of checks (profile, source, image search, date, other coverage, comments), then make your call: confirm as true, not sure, or flag as fake.
+2. **Feed (信息流)** — Switch sides. Posts drawn at random from a pool of 30 land in your feed. Use a limited number of checks (profile, source, image search, date, other coverage, comments), then make your call: confirm as true, not sure, or flag as fake. The last two posts of every feed are real cases from the internet (for example the hacked AP tweet of 2013, the 5G and toilet-paper rumours of 2020, and the Ice Bucket Challenge). After your call, the game shows what each one really caused, with sources.
 3. **Results (结果)** — See how many people believed fakes or got the facts, review every call, and take away the SIFT method.
 
 Seeing the tricks from the inside works like a vaccine ("prebunking"). In a Cambridge study of the game *Bad News*, players rated fake news as 21% less reliable after playing (Roozenbeek & van der Linden, *Palgrave Communications*, 2019). On Twitter, false stories were 70% more likely to be reshared than true ones (Vosoughi, Roy & Aral, *Science*, 2018).
@@ -28,5 +28,5 @@ Seeing the tricks from the inside works like a vaccine ("prebunking"). In a Camb
 Everything is in one file, `index.html`: plain HTML, CSS and JavaScript with no dependencies. Content (stories, posts, tricks, interface text) sits in data objects at the top of the script, so new posts or stories can be added without touching the game logic.
 所有代码都在 `index.html` 一个文件里,原生 HTML/CSS/JS,没有依赖。故事、帖子、手法和界面文字都集中在脚本顶部的数据对象里。
 
-All people, accounts, places, studies and events in the game are fictional.
-游戏中的所有人物、账号、地点、研究和事件均为虚构。
+Apart from the real cases at the end of each feed, all people, accounts, places, studies and events in the game are fictional. Real-case posts are paraphrased, and private individuals are not named.
+除了信息流最后的真实案例,游戏中的所有人物、账号、地点、研究和事件均为虚构。真实案例的帖子内容为转述,不点名普通个人。
